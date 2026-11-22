@@ -3,7 +3,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'COLOCA_AQUI_O_TEU_EMAIL';
+        && request.auth.token.email == 'uminho.thirstprojectportugal@gmail.com';
     }
     match /products/{fileName} {
       allow read: if true;
