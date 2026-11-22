@@ -22,7 +22,7 @@
         <label>Nome do produto<input id="productName" required placeholder="Ex.: Sticker Gotinha"></label>
         <label>Categoria<select id="productCategory"><option value="sticker">Sticker</option><option value="keychain">Porta-chaves</option></select></label>
         <label class="wide">Descrição (opcional)<input id="productDescription" placeholder="Pequena descrição do produto"></label>
-        <label class="wide">Imagem do produto<input id="productImage" type="file" accept="image/*"><small>JPG, PNG ou WEBP. Até 5 MB. Para editar, só precisas de escolher uma nova imagem se quiseres substituí-la.</small></label>
+        <label class="wide">Imagem do produto<select id="productImage" required><option value="">A carregar imagens...</option></select><small>Seleciona uma imagem já existente no GitHub.</small></label>
       </div><div class="image-preview-wrap" id="previewWrap" hidden><img id="imagePreview" alt="Pré-visualização"><span>Pré-visualização</span></div>
       <div class="form-buttons"><button class="primary-btn" type="submit" id="saveProduct">Adicionar produto</button><button class="secondary-btn" type="button" id="cancelEdit" hidden>Cancelar edição</button></div><p id="saveFeedback" class="feedback" role="status"></p>
       </form>
