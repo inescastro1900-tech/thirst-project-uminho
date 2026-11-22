@@ -46,6 +46,9 @@ const dashboardPanel = $('dashboardPanel');
 
 function message(id, text, isError = false) {
   const el = $(id);
+
+  if (!el) return;
+
   el.textContent = text;
   el.style.color = isError ? '#b42318' : '#087e83';
 }
@@ -66,7 +69,12 @@ function imageUrl(path) {
 
 function requireConfig() {
   if (!firebaseConfigured) {
-    message('loginFeedback', 'Configura primeiro o firebase-config.js.', true);
+    message(
+      'loginFeedback',
+      'Configura primeiro o firebase-config.js.',
+      true
+    );
+
     return false;
   }
 
@@ -91,14 +99,24 @@ $('loginForm').addEventListener('submit', async e => {
       $('loginEmail').value.trim(),
       $('loginPassword').value
     );
+
   } catch (err) {
-    message('loginFeedback', `Erro de autenticação: ${err.message}`, true);
+    message(
+      'loginFeedback',
+      `Erro de autenticação: ${err.message}`,
+      true
+    );
+
   } finally {
     button.disabled = false;
   }
 });
 
 $('logoutBtn').onclick = () => signOut(auth);
+
+// ==========================================
+// ESTADO DA SESSÃO
+// ==========================================
 
 onAuthStateChanged(auth, user => {
 
@@ -114,12 +132,15 @@ onAuthStateChanged(auth, user => {
       `Sessão iniciada como ${user.email}`;
 
     loadImages();
+
     startProductsListener();
     startOrdersListener();
 
   } else {
 
-    if (user) signOut(auth);
+    if (user) {
+      signOut(auth);
+    }
 
     if (unsubscribeProducts) {
       unsubscribeProducts();
@@ -146,6 +167,7 @@ onAuthStateChanged(auth, user => {
 async function loadImages() {
 
   const folders = ['stickers', 'portachaves'];
+
   imageFiles = [];
 
   try {
@@ -158,7 +180,9 @@ async function loadImages() {
       const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error(`Não foi possível consultar assets/${folder}.`);
+        throw new Error(
+          `Não foi possível consultar assets/${folder}.`
+        );
       }
 
       const files = await response.json();
@@ -173,7 +197,9 @@ async function loadImages() {
           imageFiles.push({
             name: file.name,
             path: `assets/${folder}/${file.name}`,
-            category: folder === 'stickers' ? 'sticker' : 'keychain'
+            category: folder === 'stickers'
+              ? 'sticker'
+              : 'keychain'
           });
 
         });
@@ -182,9 +208,18 @@ async function loadImages() {
     updateImageSelector();
 
   } catch (err) {
-    message('saveFeedback', `Erro ao carregar imagens: ${err.message}`, true);
+
+    message(
+      'saveFeedback',
+      `Erro ao carregar imagens: ${err.message}`,
+      true
+    );
   }
 }
+
+// ==========================================
+// SELEÇÃO DE IMAGENS
+// ==========================================
 
 function updateImageSelector(selectedPath = '') {
 
@@ -233,57 +268,55 @@ function updatePreview() {
 // ==========================================
 // GESTÃO DE PRODUTOS
 // ==========================================
-function startOrdersListener() {
-  console.log("1. A iniciar listener das encomendas...");
 
-  const container = $('adminOrders');
+// IMPORTANTE: Esta função estava em falta no código anterior.
 
-  if (!container) {
-    console.error("ERRO: Não foi encontrado o elemento adminOrders.");
-    return;
+function startProductsListener() {
+
+  if (unsubscribeProducts) {
+    unsubscribeProducts();
+    unsubscribeProducts = null;
   }
 
-  container.innerHTML = "<p>A estabelecer ligação ao Firestore...</p>";
+  console.log('A iniciar listener dos produtos...');
 
-  try {
-    unsubscribeOrders = onSnapshot(
-      collection(db, 'orders'),
+  unsubscribeProducts = onSnapshot(
+    collection(db, 'products'),
 
-      snapshot => {
-        console.log("2. Listener executado!");
-        console.log("3. Número de encomendas:", snapshot.size);
+    snapshot => {
 
-        orders = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+      console.log(
+        'Produtos recebidos do Firestore:',
+        snapshot.size
+      );
 
-        console.log("4. Encomendas recebidas:", orders);
+      products = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
 
-        renderOrders();
-      },
+      renderProducts();
+    },
 
-      error => {
-        console.error("ERRO no listener das encomendas:", error);
+    error => {
 
-        container.innerHTML = `
-          <p style="color: red;">
-            Erro ao carregar encomendas: ${error.message}
-          </p>
-        `;
-      }
-    );
-  } catch (error) {
-    console.error("ERRO ao iniciar listener:", error);
+      console.error(
+        'Erro ao carregar produtos:',
+        error
+      );
 
-    container.innerHTML = `
-      <p style="color: red;">
-        Erro: ${error.message}
-      </p>
-    `;
-  }
+      message(
+        'saveFeedback',
+        `Erro ao carregar produtos: ${error.message}`,
+        true
+      );
+    }
+  );
 }
 
+// ==========================================
+// MOSTRAR PRODUTOS
+// ==========================================
 
 function renderProducts() {
 
@@ -302,6 +335,7 @@ function renderProducts() {
       <img src="${escapeHTML(p.image || '')}" alt="">
 
       <div class="admin-product-info">
+
         <b>${escapeHTML(p.name)}</b>
 
         <small>
@@ -309,14 +343,22 @@ function renderProducts() {
             ? 'Porta-chaves · 4,00 €'
             : 'Sticker · Preço por packs'}
         </small>
+
       </div>
 
       <div class="admin-product-actions">
-        <button data-edit="${escapeHTML(p.id)}">Editar</button>
 
-        <button class="delete" data-delete="${escapeHTML(p.id)}">
+        <button data-edit="${escapeHTML(p.id)}">
+          Editar
+        </button>
+
+        <button
+          class="delete"
+          data-delete="${escapeHTML(p.id)}"
+        >
           Apagar
         </button>
+
       </div>
 
     </article>
@@ -331,9 +373,13 @@ $('adminProducts').addEventListener('click', e => {
   const edit = e.target.closest('[data-edit]');
   const del = e.target.closest('[data-delete]');
 
-  if (edit) editProduct(edit.dataset.edit);
-  if (del) removeProduct(del.dataset.delete);
+  if (edit) {
+    editProduct(edit.dataset.edit);
+  }
 
+  if (del) {
+    removeProduct(del.dataset.delete);
+  }
 });
 
 // ==========================================
@@ -343,6 +389,7 @@ $('adminProducts').addEventListener('click', e => {
 function resetForm() {
 
   $('productForm').reset();
+
   $('editId').value = '';
 
   $('previewWrap').hidden = true;
@@ -362,6 +409,7 @@ $('productForm').addEventListener('submit', async e => {
   e.preventDefault();
 
   const button = $('saveProduct');
+
   button.disabled = true;
 
   try {
@@ -383,31 +431,45 @@ $('productForm').addEventListener('submit', async e => {
 
     if (id) {
 
-      await updateDoc(doc(db, 'products', id), data);
+      await updateDoc(
+        doc(db, 'products', id),
+        data
+      );
 
     } else {
 
       data.createdAt = serverTimestamp();
 
-      await addDoc(collection(db, 'products'), data);
+      await addDoc(
+        collection(db, 'products'),
+        data
+      );
     }
 
     resetForm();
 
-    message('saveFeedback', 'Produto guardado com sucesso!');
+    message(
+      'saveFeedback',
+      'Produto guardado com sucesso!'
+    );
 
   } catch (err) {
 
-    message('saveFeedback', `Não foi possível guardar: ${err.message}`, true);
+    message(
+      'saveFeedback',
+      `Não foi possível guardar: ${err.message}`,
+      true
+    );
 
   } finally {
 
     button.disabled = false;
 
     button.textContent =
-      $('editId').value ? 'Guardar alterações' : 'Adicionar produto';
+      $('editId').value
+        ? 'Guardar alterações'
+        : 'Adicionar produto';
   }
-
 });
 
 // ==========================================
@@ -417,12 +479,18 @@ $('productForm').addEventListener('submit', async e => {
 function editProduct(id) {
 
   const p = products.find(x => x.id === id);
+
   if (!p) return;
 
   $('editId').value = id;
+
   $('productName').value = p.name || '';
-  $('productCategory').value = p.category || 'sticker';
-  $('productDescription').value = p.description || '';
+
+  $('productCategory').value =
+    p.category || 'sticker';
+
+  $('productDescription').value =
+    p.description || '';
 
   updateImageSelector(p.imagePath || '');
 
@@ -432,7 +500,10 @@ function editProduct(id) {
   }
 
   $('formTitle').textContent = 'Editar produto';
-  $('saveProduct').textContent = 'Guardar alterações';
+
+  $('saveProduct').textContent =
+    'Guardar alterações';
+
   $('cancelEdit').hidden = false;
 
   window.scrollTo({
@@ -449,18 +520,28 @@ async function removeProduct(id) {
 
   const p = products.find(x => x.id === id);
 
-  if (!p || !confirm(`Apagar "${p.name}"?`)) return;
+  if (!p || !confirm(`Apagar "${p.name}"?`)) {
+    return;
+  }
 
   try {
 
-    await deleteDoc(doc(db, 'products', id));
+    await deleteDoc(
+      doc(db, 'products', id)
+    );
 
-    message('saveFeedback', 'Produto apagado.');
+    message(
+      'saveFeedback',
+      'Produto apagado.'
+    );
 
   } catch (err) {
 
-    message('saveFeedback', `Erro ao apagar: ${err.message}`, true);
-
+    message(
+      'saveFeedback',
+      `Erro ao apagar: ${err.message}`,
+      true
+    );
   }
 }
 
@@ -470,9 +551,12 @@ async function removeProduct(id) {
 
 $('seedBtn').onclick = async () => {
 
-  if (!confirm('Importar os produtos de products.json?')) return;
+  if (!confirm('Importar os produtos de products.json?')) {
+    return;
+  }
 
   const btn = $('seedBtn');
+
   btn.disabled = true;
 
   try {
@@ -480,25 +564,34 @@ $('seedBtn').onclick = async () => {
     const response = await fetch('./products.json');
 
     if (!response.ok) {
-      throw new Error('Não foi possível ler products.json.');
+      throw new Error(
+        'Não foi possível ler products.json.'
+      );
     }
 
     const initial = await response.json();
 
-    const snapshot = await getDocs(collection(db, 'products'));
+    const snapshot = await getDocs(
+      collection(db, 'products')
+    );
 
     const existing = new Set(
       snapshot.docs.map(d => d.data().id || d.id)
     );
 
     const batch = writeBatch(db);
+
     let added = 0;
 
     for (const p of initial) {
 
       if (existing.has(p.id)) continue;
 
-      const newDoc = doc(db, 'products', p.id);
+      const newDoc = doc(
+        db,
+        'products',
+        p.id
+      );
 
       batch.set(newDoc, {
         ...p,
@@ -515,16 +608,22 @@ $('seedBtn').onclick = async () => {
       await batch.commit();
     }
 
-    message('saveFeedback', `${added} produtos importados.`);
+    message(
+      'saveFeedback',
+      `${added} produtos importados.`
+    );
 
   } catch (err) {
 
-    message('saveFeedback', `Erro na importação: ${err.message}`, true);
+    message(
+      'saveFeedback',
+      `Erro na importação: ${err.message}`,
+      true
+    );
 
   } finally {
 
     btn.disabled = false;
-
   }
 };
 
@@ -536,13 +635,25 @@ function startOrdersListener() {
 
   if (unsubscribeOrders) {
     unsubscribeOrders();
+    unsubscribeOrders = null;
   }
 
   const container = $('adminOrders');
 
-  container.innerHTML = '<p>A carregar encomendas...</p>';
+  if (!container) {
+    console.error(
+      'Elemento adminOrders não encontrado.'
+    );
 
-  console.log('A iniciar listener das encomendas...');
+    return;
+  }
+
+  container.innerHTML =
+    '<p>A carregar encomendas...</p>';
+
+  console.log(
+    '1. A iniciar listener das encomendas...'
+  );
 
   unsubscribeOrders = onSnapshot(
     collection(db, 'orders'),
@@ -550,7 +661,11 @@ function startOrdersListener() {
     snapshot => {
 
       console.log(
-        'Encomendas recebidas do Firestore:',
+        '2. Listener executado!'
+      );
+
+      console.log(
+        '3. Número de encomendas:',
         snapshot.size
       );
 
@@ -561,26 +676,36 @@ function startOrdersListener() {
         }))
         .sort((a, b) => {
 
-          const dateA = a.createdAt?.toDate?.()?.getTime() || 0;
-          const dateB = b.createdAt?.toDate?.()?.getTime() || 0;
+          const dateA =
+            a.createdAt?.toDate?.()?.getTime() || 0;
+
+          const dateB =
+            b.createdAt?.toDate?.()?.getTime() || 0;
 
           return dateB - dateA;
         });
+
+      console.log(
+        '4. Encomendas recebidas:',
+        orders
+      );
 
       renderOrders();
     },
 
     error => {
 
-      console.error('Erro ao carregar encomendas:', error);
+      console.error(
+        'Erro ao carregar encomendas:',
+        error
+      );
 
       container.innerHTML = `
         <p class="feedback">
-          Não foi possível carregar as encomendas.
+          Não foi possível carregar as encomendas:
           ${escapeHTML(error.message)}
         </p>
       `;
-
     }
   );
 }
@@ -595,13 +720,16 @@ function formatOrderDate(timestamp) {
     return 'Data indisponível';
   }
 
-  return timestamp.toDate().toLocaleString('pt-PT', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return timestamp.toDate().toLocaleString(
+    'pt-PT',
+    {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }
+  );
 }
 
 function orderStatusOptions(current) {
@@ -634,15 +762,22 @@ function renderOrders() {
 
   const container = $('adminOrders');
 
-  const search = $('orderSearch').value.trim().toLowerCase();
-  const statusFilter = $('orderStatusFilter').value;
+  if (!container) return;
+
+  const search =
+    $('orderSearch').value.trim().toLowerCase();
+
+  const statusFilter =
+    $('orderStatusFilter').value;
 
   $('orderCount').textContent = orders.length;
 
   const visible = orders.filter(order => {
 
     const matchesSearch =
-      (order.customerName || '').toLowerCase().includes(search) ||
+      (order.customerName || '')
+        .toLowerCase()
+        .includes(search) ||
       order.id.toLowerCase().includes(search);
 
     const matchesStatus =
@@ -667,7 +802,10 @@ function renderOrders() {
 
   container.innerHTML = visible.map(order => {
 
-    const items = Array.isArray(order.items) ? order.items : [];
+    const items =
+      Array.isArray(order.items)
+        ? order.items
+        : [];
 
     const itemHTML = items.map(item => `
 
@@ -680,18 +818,23 @@ function renderOrders() {
             : '(Sticker)'}
         </span>
 
-        <b>${Number(item.quantity) || 0} ×</b>
+        <b>
+          ${Number(item.quantity) || 0} ×
+        </b>
 
       </div>
 
     `).join('');
 
-    const total = Number(order.total || 0).toLocaleString('pt-PT', {
+    const total = Number(
+      order.total || 0
+    ).toLocaleString('pt-PT', {
       style: 'currency',
       currency: 'EUR'
     });
 
-    const status = order.status || 'Pendente';
+    const status =
+      order.status || 'Pendente';
 
     return `
 
@@ -709,11 +852,15 @@ function renderOrders() {
               ${escapeHTML(order.customerName || 'Cliente sem nome')}
             </h3>
 
-            <small>${formatOrderDate(order.createdAt)}</small>
+            <small>
+              ${formatOrderDate(order.createdAt)}
+            </small>
 
           </div>
 
-          <strong class="order-total">${total}</strong>
+          <strong class="order-total">
+            ${total}
+          </strong>
 
         </div>
 
@@ -732,6 +879,7 @@ function renderOrders() {
             >
               ${orderStatusOptions(status)}
             </select>
+
           </label>
 
           <button
@@ -755,73 +903,94 @@ function renderOrders() {
 // PESQUISA E FILTROS
 // ==========================================
 
-$('orderSearch').addEventListener('input', renderOrders);
+$('orderSearch').addEventListener(
+  'input',
+  renderOrders
+);
 
-$('orderStatusFilter').addEventListener('change', renderOrders);
+$('orderStatusFilter').addEventListener(
+  'change',
+  renderOrders
+);
 
 // ==========================================
 // ALTERAR ESTADO DA ENCOMENDA
 // ==========================================
 
-$('adminOrders').addEventListener('change', async event => {
+$('adminOrders').addEventListener(
+  'change',
+  async event => {
 
-  const select = event.target.closest('[data-order-status]');
+    const select =
+      event.target.closest('[data-order-status]');
 
-  if (!select) return;
+    if (!select) return;
 
-  const id = select.dataset.orderStatus;
-  const newStatus = select.value;
+    const id = select.dataset.orderStatus;
+    const newStatus = select.value;
 
-  select.disabled = true;
+    select.disabled = true;
 
-  try {
+    try {
 
-    await updateDoc(doc(db, 'orders', id), {
-      status: newStatus
-    });
+      await updateDoc(
+        doc(db, 'orders', id),
+        {
+          status: newStatus
+        }
+      );
 
-  } catch (error) {
+    } catch (error) {
 
-    alert(`Não foi possível atualizar a encomenda: ${error.message}`);
+      alert(
+        `Não foi possível atualizar a encomenda: ${error.message}`
+      );
 
-    renderOrders();
+      renderOrders();
 
-  } finally {
+    } finally {
 
-    select.disabled = false;
-
+      select.disabled = false;
+    }
   }
-});
+);
 
 // ==========================================
 // ELIMINAR ENCOMENDA
 // ==========================================
 
-$('adminOrders').addEventListener('click', async event => {
+$('adminOrders').addEventListener(
+  'click',
+  async event => {
 
-  const button = event.target.closest('[data-delete-order]');
+    const button =
+      event.target.closest('[data-delete-order]');
 
-  if (!button) return;
+    if (!button) return;
 
-  const id = button.dataset.deleteOrder;
+    const id = button.dataset.deleteOrder;
 
-  if (!confirm('Tens a certeza de que queres apagar esta encomenda?')) {
-    return;
+    if (!confirm(
+      'Tens a certeza de que queres apagar esta encomenda?'
+    )) {
+      return;
+    }
+
+    button.disabled = true;
+
+    try {
+
+      await deleteDoc(
+        doc(db, 'orders', id)
+      );
+
+    } catch (error) {
+
+      alert(
+        `Não foi possível apagar a encomenda: ${error.message}`
+      );
+
+      button.disabled = false;
+    }
   }
-
-  button.disabled = true;
-
-  try {
-
-    await deleteDoc(doc(db, 'orders', id));
-
-  } catch (error) {
-
-    alert(`Não foi possível apagar a encomenda: ${error.message}`);
-
-    button.disabled = false;
-
-  }
-
-});
-
+);
