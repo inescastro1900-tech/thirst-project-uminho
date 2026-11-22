@@ -233,33 +233,57 @@ function updatePreview() {
 // ==========================================
 // GESTÃO DE PRODUTOS
 // ==========================================
+function startOrdersListener() {
+  console.log("1. A iniciar listener das encomendas...");
 
-function startProductsListener() {
+  const container = $('adminOrders');
 
-  if (unsubscribeProducts) {
-    unsubscribeProducts();
+  if (!container) {
+    console.error("ERRO: Não foi encontrado o elemento adminOrders.");
+    return;
   }
 
-  unsubscribeProducts = onSnapshot(
-    collection(db, 'products'),
+  container.innerHTML = "<p>A estabelecer ligação ao Firestore...</p>";
 
-    snap => {
+  try {
+    unsubscribeOrders = onSnapshot(
+      collection(db, 'orders'),
 
-      products = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) =>
-          (a.name || '').localeCompare(b.name || '', 'pt')
-        );
+      snapshot => {
+        console.log("2. Listener executado!");
+        console.log("3. Número de encomendas:", snapshot.size);
 
-      renderProducts();
-    },
+        orders = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
 
-    err => {
-      message('saveFeedback', `Erro ao ler catálogo: ${err.message}`, true);
-      console.error(err);
-    }
-  );
+        console.log("4. Encomendas recebidas:", orders);
+
+        renderOrders();
+      },
+
+      error => {
+        console.error("ERRO no listener das encomendas:", error);
+
+        container.innerHTML = `
+          <p style="color: red;">
+            Erro ao carregar encomendas: ${error.message}
+          </p>
+        `;
+      }
+    );
+  } catch (error) {
+    console.error("ERRO ao iniciar listener:", error);
+
+    container.innerHTML = `
+      <p style="color: red;">
+        Erro: ${error.message}
+      </p>
+    `;
+  }
 }
+
 
 function renderProducts() {
 
