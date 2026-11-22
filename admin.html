@@ -8,6 +8,7 @@
   <title>Dashboard | Thirst Project UMinho</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body class="admin-body">
 
 <header class="topbar">
@@ -20,6 +21,7 @@
 
 <main class="admin-main">
 
+  <!-- LOGIN -->
   <section class="admin-login admin-card" id="loginPanel">
     <p class="eyebrow">ÁREA RESERVADA</p>
     <h1>Dashboard <span>✳</span></h1>
@@ -29,26 +31,35 @@
       <label>Email
         <input id="loginEmail" type="email" autocomplete="username" required>
       </label>
+
       <label>Palavra-passe
         <input id="loginPassword" type="password" autocomplete="current-password" required>
       </label>
+
       <button class="primary-btn" type="submit">Iniciar sessão</button>
       <p class="feedback" id="loginFeedback" role="status"></p>
     </form>
   </section>
 
+  <!-- DASHBOARD -->
   <section id="dashboardPanel" hidden>
 
     <div class="admin-title">
       <div>
         <p class="eyebrow">ÁREA DE GESTÃO</p>
         <h1>Dashboard <span>✳</span></h1>
-        <p>Os produtos são guardados automaticamente na base de dados.</p>
+        <p>Gere os produtos e acompanha as encomendas da loja.</p>
         <small id="signedInAs"></small>
       </div>
+
       <div class="admin-actions">
-        <button class="secondary-btn" id="seedBtn">Importar catálogo inicial</button>
-        <button class="secondary-btn" id="logoutBtn">Terminar sessão</button>
+        <button class="secondary-btn" id="seedBtn">
+          Importar catálogo inicial
+        </button>
+
+        <button class="secondary-btn" id="logoutBtn">
+          Terminar sessão
+        </button>
       </div>
     </div>
 
@@ -57,13 +68,16 @@
       as alterações são guardadas no Firestore. As imagens são selecionadas diretamente do GitHub.
     </div>
 
+    <!-- GESTÃO DE PRODUTOS -->
     <section class="admin-card">
+
       <div class="admin-card-head">
         <h2 id="formTitle">Adicionar produto</h2>
         <span class="tag">CATÁLOGO ONLINE</span>
       </div>
 
       <form id="productForm">
+
         <input type="hidden" id="editId">
 
         <div class="form-grid">
@@ -98,33 +112,41 @@
         </div>
 
         <div class="form-buttons">
-          <button class="primary-btn" type="submit" id="saveProduct">Adicionar produto</button>
-          <button class="secondary-btn" type="button" id="cancelEdit" hidden>Cancelar edição</button>
+          <button class="primary-btn" type="submit" id="saveProduct">
+            Adicionar produto
+          </button>
+
+          <button class="secondary-btn" type="button" id="cancelEdit" hidden>
+            Cancelar edição
+          </button>
         </div>
 
         <p id="saveFeedback" class="feedback" role="status"></p>
+
       </form>
     </section>
 
-    
     <!-- GESTÃO DE ENCOMENDAS -->
     <section class="admin-card orders-section">
+
       <div class="admin-card-head">
         <div>
           <p class="eyebrow">LOJA ONLINE</p>
           <h2>Gestão de encomendas <span id="orderCount">0</span></h2>
         </div>
+
         <span class="tag">ENCOMENDAS</span>
       </div>
-    
+
       <div class="orders-filters">
+
         <input
           id="orderSearch"
           class="search-input"
           type="search"
           placeholder="Pesquisar por nome ou número..."
         >
-    
+
         <select id="orderStatusFilter" class="search-input">
           <option value="all">Todos os estados</option>
           <option value="Pendente">Pendentes</option>
@@ -133,28 +155,41 @@
           <option value="Entregue">Entregues</option>
           <option value="Cancelada">Canceladas</option>
         </select>
+
       </div>
-    
+
       <div id="adminOrders" class="admin-orders">
         <p>A carregar encomendas...</p>
       </div>
+
     </section>
 
+    <!-- LISTA DE PRODUTOS -->
     <section class="admin-list">
+
       <div class="list-heading">
         <div>
           <p class="eyebrow">CATÁLOGO</p>
           <h2>Os teus produtos <span id="productCount">0</span></h2>
         </div>
-        <input id="adminSearch" class="search-input" placeholder="Pesquisar produtos…">
+
+        <input
+          id="adminSearch"
+          class="search-input"
+          placeholder="Pesquisar produtos..."
+        >
       </div>
+
       <div id="adminProducts" class="admin-products"></div>
+
     </section>
 
   </section>
+
 </main>
 
 <script type="module" src="admin.js"></script>
+
 </body>
 </html>
 
