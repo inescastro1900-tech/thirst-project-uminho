@@ -1,34 +1,126 @@
+
 <!doctype html>
 <html lang="pt-PT">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#48c2c5"><title>Dashboard | Thirst Project UMinho</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#48c2c5">
+  <title>Dashboard | Thirst Project UMinho</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="admin-body">
-<header class="topbar"><a class="brand" href="index.html"><span class="drop">💧</span><span>THIRST PROJECT <b>UMINHO</b></span></a><a class="back-link" href="index.html">← Ver loja</a></header>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <span class="drop">💧</span>
+    <span>THIRST PROJECT <b>UMINHO</b></span>
+  </a>
+  <a class="back-link" href="index.html">← Ver loja</a>
+</header>
+
 <main class="admin-main">
+
   <section class="admin-login admin-card" id="loginPanel">
-    <p class="eyebrow">ÁREA RESERVADA</p><h1>Dashboard <span>✳</span></h1>
+    <p class="eyebrow">ÁREA RESERVADA</p>
+    <h1>Dashboard <span>✳</span></h1>
     <p>Inicia sessão com a conta de administradora para gerir a loja.</p>
-    <form id="loginForm" class="login-form"><label>Email<input id="loginEmail" type="email" autocomplete="username" required placeholder="teu@email.com"></label><label>Palavra-passe<input id="loginPassword" type="password" autocomplete="current-password" required></label><button class="primary-btn" type="submit">Iniciar sessão</button><p class="feedback" id="loginFeedback" role="status"></p></form>
+
+    <form id="loginForm" class="login-form">
+      <label>Email
+        <input id="loginEmail" type="email" autocomplete="username" required>
+      </label>
+      <label>Palavra-passe
+        <input id="loginPassword" type="password" autocomplete="current-password" required>
+      </label>
+      <button class="primary-btn" type="submit">Iniciar sessão</button>
+      <p class="feedback" id="loginFeedback" role="status"></p>
+    </form>
   </section>
 
   <section id="dashboardPanel" hidden>
-    <div class="admin-title"><div><p class="eyebrow">ÁREA DE GESTÃO</p><h1>Dashboard <span>✳</span></h1><p>Os produtos são guardados automaticamente na base de dados.</p><small id="signedInAs"></small></div><div class="admin-actions"><button class="secondary-btn" id="seedBtn">Importar catálogo inicial</button><button class="secondary-btn" id="logoutBtn">Terminar sessão</button></div></div>
-    <div class="notice"><b>Sincronização automática:</b> ao adicionar, editar ou apagar um produto, a loja pública recebe a alteração da base de dados. As fotografias novas são guardadas no Firebase Storage. Não precisas de exportar ficheiros nem voltar a carregar o catálogo no GitHub.</div>
-    <section class="admin-card"><div class="admin-card-head"><h2 id="formTitle">Adicionar produto</h2><span class="tag">CATÁLOGO ONLINE</span></div>
-      <form id="productForm"><input type="hidden" id="editId"><div class="form-grid">
-        <label>Nome do produto<input id="productName" required placeholder="Ex.: Sticker Gotinha"></label>
-        <label>Categoria<select id="productCategory"><option value="sticker">Sticker</option><option value="keychain">Porta-chaves</option></select></label>
-        <label class="wide">Descrição (opcional)<input id="productDescription" placeholder="Pequena descrição do produto"></label>
-        <label class="wide">Imagem do produto<select id="productImage" required><option value="">A carregar imagens...</option></select><small>Seleciona uma imagem já existente no GitHub.</small></label>
-      </div><div class="image-preview-wrap" id="previewWrap" hidden><img id="imagePreview" alt="Pré-visualização"><span>Pré-visualização</span></div>
-      <div class="form-buttons"><button class="primary-btn" type="submit" id="saveProduct">Adicionar produto</button><button class="secondary-btn" type="button" id="cancelEdit" hidden>Cancelar edição</button></div><p id="saveFeedback" class="feedback" role="status"></p>
+
+    <div class="admin-title">
+      <div>
+        <p class="eyebrow">ÁREA DE GESTÃO</p>
+        <h1>Dashboard <span>✳</span></h1>
+        <p>Os produtos são guardados automaticamente na base de dados.</p>
+        <small id="signedInAs"></small>
+      </div>
+      <div class="admin-actions">
+        <button class="secondary-btn" id="seedBtn">Importar catálogo inicial</button>
+        <button class="secondary-btn" id="logoutBtn">Terminar sessão</button>
+      </div>
+    </div>
+
+    <div class="notice">
+      <b>Sincronização automática:</b>
+      as alterações são guardadas no Firestore. As imagens são selecionadas diretamente do GitHub.
+    </div>
+
+    <section class="admin-card">
+      <div class="admin-card-head">
+        <h2 id="formTitle">Adicionar produto</h2>
+        <span class="tag">CATÁLOGO ONLINE</span>
+      </div>
+
+      <form id="productForm">
+        <input type="hidden" id="editId">
+
+        <div class="form-grid">
+
+          <label>Nome do produto
+            <input id="productName" required placeholder="Ex.: Sticker Gotinha">
+          </label>
+
+          <label>Categoria
+            <select id="productCategory">
+              <option value="sticker">Sticker</option>
+              <option value="keychain">Porta-chaves</option>
+            </select>
+          </label>
+
+          <label class="wide">Descrição (opcional)
+            <input id="productDescription" placeholder="Pequena descrição do produto">
+          </label>
+
+          <label class="wide">Imagem do produto
+            <select id="productImage" required>
+              <option value="">A carregar imagens...</option>
+            </select>
+            <small>Seleciona uma imagem já existente no GitHub.</small>
+          </label>
+
+        </div>
+
+        <div class="image-preview-wrap" id="previewWrap" hidden>
+          <img id="imagePreview" alt="Pré-visualização">
+          <span>Pré-visualização</span>
+        </div>
+
+        <div class="form-buttons">
+          <button class="primary-btn" type="submit" id="saveProduct">Adicionar produto</button>
+          <button class="secondary-btn" type="button" id="cancelEdit" hidden>Cancelar edição</button>
+        </div>
+
+        <p id="saveFeedback" class="feedback" role="status"></p>
       </form>
     </section>
-    <section class="admin-list"><div class="list-heading"><div><p class="eyebrow">CATÁLOGO</p><h2>Os teus produtos <span id="productCount">0</span></h2></div><input id="adminSearch" class="search-input" placeholder="Pesquisar produtos…"></div><div id="adminProducts" class="admin-products"></div></section>
+
+    <section class="admin-list">
+      <div class="list-heading">
+        <div>
+          <p class="eyebrow">CATÁLOGO</p>
+          <h2>Os teus produtos <span id="productCount">0</span></h2>
+        </div>
+        <input id="adminSearch" class="search-input" placeholder="Pesquisar produtos…">
+      </div>
+      <div id="adminProducts" class="admin-products"></div>
+    </section>
+
   </section>
 </main>
+
 <script type="module" src="admin.js"></script>
-</body></html>
+</body>
+</html>
+
