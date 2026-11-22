@@ -1323,3 +1323,40 @@ footer a {
     font-size: 24px;
   }
 }
+
+
+/* CAMPOS DE NOME E CONTACTO NO CARRINHO */
+
+.customer-label {
+  display: block;
+  font-weight: 700;
+  color: #023b53;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.customer-input {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cddbd8;
+  border-radius: 9px;
+  background: white;
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.customer-input:focus {
+  outline: none;
+  border-color: #48c2c5;
+  box-shadow: 0 0 0 2px rgba(72, 194, 197, 0.2);
+}
+
+.contact-hint {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #718187;
+  margin: 7px 0 12px;
+}
