@@ -11,7 +11,6 @@
 </head>
 
 <body>
-
 <header class="topbar">
   <a class="brand" href="#inicio">
     <span class="drop">💧</span>
@@ -29,7 +28,6 @@
 </header>
 
 <main>
-
   <section class="hero" id="inicio">
     <div class="hero-copy">
       <p class="eyebrow">PEQUENOS ARTIGOS, UMA CAUSA GIGANTE</p>
@@ -72,7 +70,6 @@
 
   <section class="about" id="sobre">
     <div class="about-mark">💧</div>
-
     <div>
       <p class="eyebrow">MAIS DO QUE STICKERS E PORTA-CHAVES</p>
       <h2>Uma gota de cada vez.</h2>
@@ -85,10 +82,8 @@
         </a>.
       </p>
     </div>
-
     <a href="#loja" class="round-link" aria-label="Voltar à loja">↑</a>
   </section>
-
 </main>
 
 <footer>
@@ -96,18 +91,14 @@
   <a href="admin.html">Área reservada</a>
 </footer>
 
-<!-- FUNDO DO CARRINHO -->
 <div class="overlay" id="overlay"></div>
 
-<!-- CARRINHO -->
 <aside class="cart-panel" id="cartPanel" aria-label="Carrinho de compras">
-
   <div class="cart-head">
     <div>
       <p class="eyebrow">A TUA SELEÇÃO</p>
       <h2>Carrinho <span id="cartTitleCount">(0)</span></h2>
     </div>
-
     <button class="icon-btn" id="cartClose" aria-label="Fechar">✕</button>
   </div>
 
@@ -125,8 +116,27 @@
 
     <p class="small-note">Portes de envio, se aplicáveis, serão combinados à parte.</p>
 
-    <label class="customer-label" for="customerName">O teu nome (opcional)</label>
-    <input id="customerName" class="customer-input" placeholder="Como te chamas?">
+    <label class="customer-label" for="customerName">O teu nome *</label>
+    <input
+      id="customerName"
+      class="customer-input"
+      type="text"
+      placeholder="Como te chamas?"
+      autocomplete="name"
+      required
+    >
+
+    <label class="customer-label" for="customerContact">Email ou telemóvel *</label>
+    <input
+      id="customerContact"
+      class="customer-input"
+      type="text"
+      placeholder="exemplo@email.com ou 912345678"
+      autocomplete="email"
+      required
+    >
+
+    <p class="contact-hint">Precisamos deste contacto para combinar contigo a entrega e o pagamento.</p>
 
     <button id="finishOrder" class="primary-btn checkout-btn">
       Finalizar encomenda
@@ -138,10 +148,8 @@
 
     <p id="copyFeedback" class="feedback" aria-live="polite"></p>
   </div>
-
 </aside>
 
-<!-- POP-UP DE CONFIRMAÇÃO -->
 <div id="successModal" class="success-modal" hidden>
   <div class="success-modal-content"
        role="dialog"
@@ -152,9 +160,7 @@
 
     <h2 id="successTitle">Encomenda recebida!</h2>
 
-    <p>
-      A tua encomenda foi registada com sucesso.
-    </p>
+    <p>A tua encomenda foi registada com sucesso.</p>
 
     <p>
       Entraremos em contacto contigo para combinar a entrega dos artigos
@@ -170,7 +176,6 @@
     <button type="button" id="successClose" class="primary-btn">
       Continuar
     </button>
-
   </div>
 </div>
 
