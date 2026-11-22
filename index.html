@@ -1,51 +1,181 @@
+
 <!doctype html>
 <html lang="pt-PT">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#48c2c5"><meta name="description" content="Venda de Stickers e Porta-chaves - Thirst Project UMinho">
-  <title>Thirst Project UMinho | Loja</title><link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#48c2c5">
+  <meta name="description" content="Venda de Stickers e Porta-chaves - Thirst Project UMinho">
+  <title>Thirst Project UMinho | Loja</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-<header class="topbar"><a class="brand" href="#inicio"><span class="drop">💧</span><span>THIRST PROJECT <b>UMINHO</b></span></a><nav><a href="#loja">Loja</a><a href="#sobre">Sobre o projeto</a></nav><button class="cart-open" id="cartOpen">Carrinho <span id="cartCount">0</span></button></header>
+
+<header class="topbar">
+  <a class="brand" href="#inicio">
+    <span class="drop">💧</span>
+    <span>THIRST PROJECT <b>UMINHO</b></span>
+  </a>
+
+  <nav>
+    <a href="#loja">Loja</a>
+    <a href="#sobre">Sobre o projeto</a>
+  </nav>
+
+  <button class="cart-open" id="cartOpen">
+    Carrinho <span id="cartCount">0</span>
+  </button>
+</header>
+
 <main>
-<section class="hero" id="inicio"><div class="hero-copy"><p class="eyebrow">PEQUENOS ARTIGOS, UMA CAUSA GIGANTE</p><h1>Escolhe os teus<br><span>favoritos.</span></h1><p>Stickers e porta-chaves para levares contigo. Cada compra ajuda a apoiar a missão do Thirst Project.</p><a class="primary-btn" href="#loja">Ver produtos <span>↗</span></a></div><div class="hero-art"><span class="sunburst">✳</span><div class="bubble bubble-one">DROP<br>BY DROP</div><div class="bubble bubble-two">💧</div><div class="hero-sticker">THIRST<br><strong>PROJECT</strong><small>UMINHO</small></div><span class="sparkle">✦</span></div></section>
-<section class="shop-section" id="loja"><div class="section-heading"><div><p class="eyebrow">A LOJINHA SOLIDÁRIA</p><h2>Encontra o teu match<span>!</span></h2></div><div class="filters"><button class="filter active" data-filter="all">Todos</button><button class="filter" data-filter="sticker">Stickers</button><button class="filter" data-filter="keychain">Porta-chaves</button></div></div><div class="product-grid" id="productGrid"><p class="loading">A carregar produtos…</p></div></section>
-<section class="about" id="sobre"><div class="about-mark">💧</div><div><p class="eyebrow">MAIS DO QUE STICKERS E PORTA-CHAVES</p><h2>Uma gota de cada vez.</h2><p>Esta é a loja do Thirst Project UMinho. Ao escolheres os nossos artigos, estás a apoiar uma iniciativa dedicada a levar água potável a comunidades que dela necessitam. Conhece mais sobre esta missão em<a href="https://thirstproject.pt/" target="_blank" rel="noopener noreferrer">Thirst Project Portugal</a>.</p></div><a href="#loja" class="round-link" aria-label="Voltar à loja">↑</a></section>
+
+  <section class="hero" id="inicio">
+    <div class="hero-copy">
+      <p class="eyebrow">PEQUENOS ARTIGOS, UMA CAUSA GIGANTE</p>
+      <h1>Escolhe os teus<br><span>favoritos.</span></h1>
+      <p>Stickers e porta-chaves para levares contigo. Cada compra ajuda a apoiar a missão do Thirst Project.</p>
+      <a class="primary-btn" href="#loja">Ver produtos <span>↗</span></a>
+    </div>
+
+    <div class="hero-art">
+      <span class="sunburst">✳</span>
+      <div class="bubble bubble-one">DROP<br>BY DROP</div>
+      <div class="bubble bubble-two">💧</div>
+      <div class="hero-sticker">
+        THIRST<br>
+        <strong>PROJECT</strong>
+        <small>UMINHO</small>
+      </div>
+      <span class="sparkle">✦</span>
+    </div>
+  </section>
+
+  <section class="shop-section" id="loja">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">A LOJINHA SOLIDÁRIA</p>
+        <h2>Encontra o teu match<span>!</span></h2>
+      </div>
+
+      <div class="filters">
+        <button class="filter active" data-filter="all">Todos</button>
+        <button class="filter" data-filter="sticker">Stickers</button>
+        <button class="filter" data-filter="keychain">Porta-chaves</button>
+      </div>
+    </div>
+
+    <div class="product-grid" id="productGrid">
+      <p class="loading">A carregar produtos…</p>
+    </div>
+  </section>
+
+  <section class="about" id="sobre">
+    <div class="about-mark">💧</div>
+
+    <div>
+      <p class="eyebrow">MAIS DO QUE STICKERS E PORTA-CHAVES</p>
+      <h2>Uma gota de cada vez.</h2>
+      <p>
+        Esta é a loja do Thirst Project UMinho. Ao escolheres os nossos artigos,
+        estás a apoiar uma iniciativa dedicada a levar água potável a comunidades
+        que dela necessitam. Conhece mais sobre esta missão em
+        <a href="https://thirstproject.pt/" target="_blank" rel="noopener noreferrer">
+          Thirst Project Portugal
+        </a>.
+      </p>
+    </div>
+
+    <a href="#loja" class="round-link" aria-label="Voltar à loja">↑</a>
+  </section>
+
 </main>
-<footer><span>THIRST PROJECT UMINHO · LOJA SOLIDÁRIA</span><a href="admin.html"> Área reservada</a></footer> 
+
+<footer>
+  <span>THIRST PROJECT UMINHO · LOJA SOLIDÁRIA</span>
+  <a href="admin.html">Área reservada</a>
+</footer>
+
+<!-- FUNDO DO CARRINHO -->
+<div class="overlay" id="overlay"></div>
+
+<!-- CARRINHO -->
+<aside class="cart-panel" id="cartPanel" aria-label="Carrinho de compras">
+
+  <div class="cart-head">
+    <div>
+      <p class="eyebrow">A TUA SELEÇÃO</p>
+      <h2>Carrinho <span id="cartTitleCount">(0)</span></h2>
+    </div>
+
+    <button class="icon-btn" id="cartClose" aria-label="Fechar">✕</button>
+  </div>
+
+  <div id="cartItems" class="cart-items">
+    <p class="empty-cart">Ainda não escolheste nada. Vai espreitar a loja!</p>
+  </div>
+
+  <div class="cart-bottom">
+    <div id="cartBreakdown"></div>
+
+    <div class="total-line">
+      <span>Total</span>
+      <strong id="cartTotal">0,00 €</strong>
+    </div>
+
+    <p class="small-note">Portes de envio, se aplicáveis, serão combinados à parte.</p>
+
+    <label class="customer-label" for="customerName">O teu nome (opcional)</label>
+    <input id="customerName" class="customer-input" placeholder="Como te chamas?">
+
+    <button id="finishOrder" class="primary-btn checkout-btn">
+      Finalizar encomenda
+    </button>
+
+    <button id="copyOrder" class="primary-btn checkout-btn">
+      Copiar resumo da encomenda
+    </button>
+
+    <p id="copyFeedback" class="feedback" aria-live="polite"></p>
+  </div>
+
+</aside>
+
 <!-- POP-UP DE CONFIRMAÇÃO -->
-<div class="success-modal" id="successModal" hidden>
-  <div class="success-modal-content" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+<div id="successModal" class="success-modal" hidden>
+  <div class="success-modal-content"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="successTitle">
 
     <div class="success-icon">✓</div>
 
-    <p class="eyebrow">THIRST PROJECT UMINHO</p>
-
     <h2 id="successTitle">Encomenda recebida!</h2>
 
-    <p class="success-message">
+    <p>
       A tua encomenda foi registada com sucesso.
     </p>
 
     <p>
-      Obrigada por apoiares o nosso projeto! 💧
+      Entraremos em contacto contigo para combinar a entrega dos artigos
+      e o respetivo pagamento.
     </p>
 
-    <p>
-      Entraremos em contacto contigo para combinar a entrega dos artigos e o respetivo pagamento.
+    <p id="successOrderNumber" class="success-order-number"></p>
+
+    <p class="success-message">
+      Obrigada por apoiares o Thirst Project UMinho! 💧
     </p>
 
-    <p class="success-order-number" id="successOrderNumber"></p>
-
-    <button type="button" class="primary-btn" id="successClose">
+    <button type="button" id="successClose" class="primary-btn">
       Continuar
     </button>
 
   </div>
 </div>
-<div class="overlay" id="overlay"></div><aside class="cart-panel" id="cartPanel" aria-label="Carrinho de compras"><div class="cart-head"><div><p class="eyebrow">A TUA SELEÇÃO</p><h2>Carrinho <span id="cartTitleCount">(0)</span></h2></div><button class="icon-btn" id="cartClose" aria-label="Fechar">✕</button></div><div id="cartItems" class="cart-items"><p class="empty-cart">Ainda não escolheste nada. Vai espreitar a loja!</p></div><div class="cart-bottom"><div id="cartBreakdown"></div><div class="total-line"><span>Total</span><strong id="cartTotal">0,00 €</strong></div><p class="small-note">Portes de envio, se aplicáveis, serão combinados à parte.</p><label class="customer-label" for="customerName">O teu nome (opcional)</label><input id="customerName" class="customer-input" placeholder="Como te chamas?">
-<button id="finishOrder" class="primary-btn checkout-btn">Finalizar encomenda</button>
-<button id="copyOrder" class="primary-btn checkout-btn">Copiar resumo da encomenda</button><p id="copyFeedback" class="feedback" aria-live="polite"></p></div></aside>
+
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@5/dist/email.min.js"></script>
 <script type="module" src="app.js"></script>
-</body></html>
+
+</body>
+</html>
