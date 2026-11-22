@@ -1,14 +1,59 @@
-let catalog=[];let selectedImageData=null;let previewObjectUrl=null;
-const $=id=>document.getElementById(id);
-async function init(){try{const r=await fetch('products.json?v='+Date.now());catalog=await r.json();}catch(e){catalog=[];}renderAdmin();}
-function safe(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function renderAdmin(){const q=$('adminSearch').value.toLowerCase();const visible=catalog.filter(p=>(p.name+' '+p.id).toLowerCase().includes(q));$('productCount').textContent=catalog.length;$('adminProducts').innerHTML=visible.map(p=>`<article class="admin-product"><img src="${p.image}" alt=""><div class="admin-product-info"><b>${safe(p.name)}</b><small>${p.category==='keychain'?'Porta-chaves':'Sticker'} · ${Number(p.price)>0?Number(p.price).toFixed(2)+' €':'Preço por definir'}</small></div><div class="admin-product-actions"><button onclick="editProduct('${p.id}')">Editar</button><button class="delete" onclick="deleteProduct('${p.id}')">Apagar</button></div></article>`).join('')||'<p>Não foram encontrados produtos.</p>';}
-function resetForm(){ $('productForm').reset();$('editId').value='';selectedImageData=null;$('previewWrap').hidden=true;$('formTitle').textContent='Adicionar produto';$('saveProduct').textContent='Adicionar produto';$('cancelEdit').hidden=true;if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null;}
-$('productImage').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){alert('Escolhe um ficheiro de imagem.');return;}if(f.size>5*1024*1024){alert('A imagem deve ter menos de 5 MB.');e.target.value='';return;}const reader=new FileReader();reader.onload=()=>{selectedImageData=reader.result;$('imagePreview').src=selectedImageData;$('previewWrap').hidden=false;};reader.readAsDataURL(f);});
-$('productForm').addEventListener('submit',e=>{e.preventDefault();const id=$('editId').value||('prod-'+Date.now());const old=catalog.find(p=>p.id===id);const p={id,name:$('productName').value.trim(),category:$('productCategory').value,price:Math.max(0,Number($('productPrice').value)),description:$('productDescription').value.trim(),image:selectedImageData||(old&&old.image)||''};if(!p.image){alert('Adiciona uma imagem ao produto.');return;}if(old){catalog=catalog.map(x=>x.id===id?p:x);}else{catalog.unshift(p);}resetForm();renderAdmin();});
-window.editProduct=id=>{const p=catalog.find(x=>x.id===id);if(!p)return;$('editId').value=p.id;$('productName').value=p.name;$('productCategory').value=p.category;$('productPrice').value=p.price;$('productDescription').value=p.description||'';selectedImageData=p.image.startsWith('data:')?p.image:null;$('imagePreview').src=p.image;$('previewWrap').hidden=false;$('formTitle').textContent='Editar produto';$('saveProduct').textContent='Guardar alterações';$('cancelEdit').hidden=false;window.scrollTo({top:0,behavior:'smooth'});};
-window.deleteProduct=id=>{const p=catalog.find(x=>x.id===id);if(p&&confirm(`Queres mesmo apagar “${p.name}”?`)){catalog=catalog.filter(x=>x.id!==id);renderAdmin();}};
-$('cancelEdit').onclick=resetForm;$('adminSearch').oninput=renderAdmin;
-$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(catalog,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='products.json';a.click();URL.revokeObjectURL(url);alert('Catálogo exportado! No GitHub, substitui o ficheiro products.json pelo ficheiro que acabaste de descarregar.');};
-$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data))throw Error();catalog=data;renderAdmin();alert('Catálogo importado. Clica em “Exportar catálogo” para guardar as alterações num novo products.json.');}catch(err){alert('Não foi possível ler o catálogo. Confirma que selecionaste um products.json válido.');}e.target.value='';};
-init();
+import { auth, db, storage, firebaseConfigured } from './firebase.js';
+import { ADMIN_EMAIL } from './firebase-config.js';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
+
+const $ = id => document.getElementById(id);
+let products = [], selectedFile = null, unsubscribe = null;
+const loginPanel = $('loginPanel'), dashboardPanel = $('dashboardPanel');
+
+function message(id, text, isError=false) { const el=$(id); el.textContent=text; el.style.color=isError?'#b42318':'#087e83'; }
+function escapeHTML(value='') { return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function requireConfig() { if (!firebaseConfigured) { message('loginFeedback','Falta configurar o ficheiro firebase-config.js antes de iniciar sessão.',true); $('loginForm').querySelector('button').disabled=true; return false; } return true; }
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault(); if(!requireConfig()) return;
+  const button=$('loginForm').querySelector('button'); button.disabled=true; button.textContent='A iniciar sessão…';
+  try { await signInWithEmailAndPassword(auth,$('loginEmail').value.trim(),$('loginPassword').value); message('loginFeedback','Sessão iniciada.'); }
+  catch(err) { message('loginFeedback',authError(err.code),true); }
+  finally { button.disabled=false; button.textContent='Iniciar sessão'; }
+});
+function authError(code) {
+  const map={'auth/invalid-credential':'Email ou palavra-passe incorretos.','auth/user-not-found':'Não existe uma conta com este email. Cria primeiro o utilizador no Firebase Authentication.','auth/wrong-password':'Palavra-passe incorreta.','auth/too-many-requests':'Demasiadas tentativas. Tenta novamente mais tarde.','auth/invalid-email':'O endereço de email não é válido.'};
+  return map[code] || `Não foi possível iniciar sessão (${code}). Confirma a configuração do Firebase.`;
+}
+$('logoutBtn').onclick=()=>signOut(auth);
+onAuthStateChanged(auth,user=>{
+  if(user && ADMIN_EMAIL && user.email?.toLowerCase()===ADMIN_EMAIL.toLowerCase()) {
+    loginPanel.hidden=true; dashboardPanel.hidden=false; $('signedInAs').textContent=`Sessão iniciada como ${user.email}`; startProductsListener();
+  } else {
+    if(user) signOut(auth);
+    if(unsubscribe) { unsubscribe(); unsubscribe=null; }
+    loginPanel.hidden=false; dashboardPanel.hidden=true;
+    if(user) message('loginFeedback','Esta conta não está autorizada a gerir a loja.',true);
+  }
+});
+function startProductsListener(){ if(unsubscribe) unsubscribe(); unsubscribe=onSnapshot(collection(db,'products'),snap=>{products=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt'));renderProducts();},err=>message('saveFeedback',`Erro ao ler catálogo: ${err.message}`,true)); }
+function renderProducts(){const q=$('adminSearch').value.toLowerCase();const visible=products.filter(p=>(p.name+' '+p.id).toLowerCase().includes(q));$('productCount').textContent=products.length;$('adminProducts').innerHTML=visible.map(p=>`<article class="admin-product"><img src="${escapeHTML(p.image||'')}" alt=""><div class="admin-product-info"><b>${escapeHTML(p.name)}</b><small>${p.category==='keychain'?'Porta-chaves':'Sticker'} · ${p.category==='keychain'?'4,00 €':'Preço por packs'}</small></div><div class="admin-product-actions"><button data-edit="${p.id}">Editar</button><button class="delete" data-delete="${p.id}">Apagar</button></div></article>`).join('')||'<p>Não foram encontrados produtos.</p>';}
+$('adminProducts').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]');const del=e.target.closest('[data-delete]');if(edit)editProduct(edit.dataset.edit);if(del)removeProduct(del.dataset.delete);});
+$('adminSearch').oninput=renderProducts;
+$('productImage').addEventListener('change',e=>{selectedFile=e.target.files[0]||null;if(!selectedFile)return;if(!selectedFile.type.startsWith('image/')||selectedFile.size>5*1024*1024){alert('Escolhe uma imagem válida com menos de 5 MB.');e.target.value='';selectedFile=null;return;}const url=URL.createObjectURL(selectedFile);$('imagePreview').src=url;$('previewWrap').hidden=false;});
+function resetForm(){ $('productForm').reset();$('editId').value='';selectedFile=null;$('previewWrap').hidden=true;$('formTitle').textContent='Adicionar produto';$('saveProduct').textContent='Adicionar produto';$('cancelEdit').hidden=true; }
+$('cancelEdit').onclick=resetForm;
+$('productForm').addEventListener('submit',async e=>{
+ e.preventDefault();const button=$('saveProduct');button.disabled=true;button.textContent='A guardar…';
+ try{
+  const id=$('editId').value;const old=products.find(p=>p.id===id);let image=old?.image||'';let imagePath=old?.imagePath||'';
+  if(selectedFile){const safeName=selectedFile.name.replace(/[^a-zA-Z0-9._-]/g,'_');imagePath=`products/${crypto.randomUUID()}-${safeName}`;const storageRef=ref(storage,imagePath);await uploadBytes(storageRef,selectedFile,{contentType:selectedFile.type});image=await getDownloadURL(storageRef);}
+  if(!image)throw new Error('Adiciona uma fotografia ao produto.');
+  const data={name:$('productName').value.trim(),category:$('productCategory').value,description:$('productDescription').value.trim(),image,imagePath:imagePath||old?.imagePath||'',updatedAt:serverTimestamp()};
+  if(id){await updateDoc(doc(db,'products',id),data);if(selectedFile&&old?.imagePath)deleteObject(ref(storage,old.imagePath)).catch(()=>{});}
+  else {data.createdAt=serverTimestamp();await addDoc(collection(db,'products'),data);}
+  resetForm();message('saveFeedback','Produto guardado e sincronizado com a loja.');
+ }catch(err){message('saveFeedback',`Não foi possível guardar: ${err.message}`,true);}
+ finally{button.disabled=false;button.textContent=$('editId').value?'Guardar alterações':'Adicionar produto';}
+});
+function editProduct(id){const p=products.find(x=>x.id===id);if(!p)return;$('editId').value=id;$('productName').value=p.name||'';$('productCategory').value=p.category||'sticker';$('productDescription').value=p.description||'';$('imagePreview').src=p.image;$('previewWrap').hidden=false;$('formTitle').textContent='Editar produto';$('saveProduct').textContent='Guardar alterações';$('cancelEdit').hidden=false;selectedFile=null;window.scrollTo({top:0,behavior:'smooth'});}
+async function removeProduct(id){const p=products.find(x=>x.id===id);if(!p||!confirm(`Apagar “${p.name}”?`))return;try{await deleteDoc(doc(db,'products',id));if(p.imagePath)await deleteObject(ref(storage,p.imagePath)).catch(()=>{});message('saveFeedback','Produto apagado.');}catch(err){message('saveFeedback',`Erro ao apagar: ${err.message}`,true);}}
+$('seedBtn').onclick=async()=>{if(!confirm('Importar os produtos de products.json para a base de dados? Produtos com o mesmo nome e categoria serão ignorados.'))return;const btn=$('seedBtn');btn.disabled=true;btn.textContent='A importar…';try{const response=await fetch('./products.json');if(!response.ok)throw new Error('Não foi possível ler products.json.');const initial=await response.json();const existing=new Set(products.map(p=>`${p.name}|${p.category}`));let batch=writeBatch(db),pending=0,added=0;for(const p of initial){if(existing.has(`${p.name}|${p.category}`))continue;const newDoc=doc(collection(db,'products'));batch.set(newDoc,{name:p.name,category:p.category,description:p.description||'',image:p.image,imagePath:'',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});pending++;added++;if(pending===450){await batch.commit();batch=writeBatch(db);pending=0;}}if(pending)await batch.commit();message('saveFeedback',`${added} produtos importados. Os existentes foram preservados.`);}catch(err){message('saveFeedback',`Erro na importação: ${err.message}`,true);}finally{btn.disabled=false;btn.textContent='Importar catálogo inicial';}};

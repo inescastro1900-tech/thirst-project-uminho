@@ -1,25 +1,50 @@
-# Thirst Project UMinho — Loja
+# Thirst Project UMinho — loja e dashboard
 
-Loja estática para GitHub Pages, com catálogo, filtros, carrinho e dashboard de gestão.
+Loja estática publicada no GitHub Pages, com catálogo e gestão de produtos em Firebase (Authentication + Cloud Firestore + Cloud Storage).
 
-## Publicar no GitHub Pages
-1. Cria um repositório GitHub (por exemplo `thirst-project-uminho`).
-2. Carrega **todo o conteúdo desta pasta** para a raiz do repositório: `index.html`, `admin.html`, `styles.css`, `app.js`, `admin.js`, `products.json` e a pasta `assets/`.
-3. No GitHub, abre **Settings → Pages**.
-4. Em **Build and deployment**, escolhe **Deploy from a branch**, branch `main` e pasta `/ (root)`. Guarda.
-5. O site ficará disponível em `https://TEU-UTILIZADOR.github.io/thirst-project-uminho/` (pode demorar alguns minutos).
+## Preços implementados
 
-## Gerir produtos
-1. Abre o endereço do site seguido de `/admin.html`.
-2. Preenche nome, categoria, preço e imagem; também podes editar ou apagar produtos.
-3. As alterações no dashboard ficam temporariamente guardadas na memória da página/navegador, não no GitHub.
-4. Quando terminares, clica **Exportar catálogo**. O browser descarrega um novo `products.json`.
-5. No repositório GitHub, substitui o `products.json` antigo pelo novo e faz **Commit changes**. Depois de o Pages atualizar, os produtos ficam visíveis para todos.
+- Stickers: 0,50 € por unidade; cada conjunto completo de 7 custa 3,00 €. A fórmula também se aplica a quantidades superiores (ex.: 8 = 3,50 €; 14 = 6,00 €).
+- Porta-chaves: 4,00 € cada, incluindo 2 stickers aleatórios por porta-chaves. Os stickers incluídos não são adicionados ao total de stickers escolhidos.
+- Portes de envio não incluídos; combinados à parte.
 
-As imagens novas são incorporadas no `products.json` exportado (base64), por isso não precisas de as carregar separadamente. Mantém as imagens otimizadas e com menos de 5 MB.
+## 1. Criar e configurar o Firebase (gratuito no plano Spark para utilização moderada)
 
-## Importante sobre o checkout
-O carrinho calcula o total e permite copiar o resumo da encomenda. Não processa pagamentos, não recolhe pagamentos online nem envia encomendas automaticamente. Os portes são combinados à parte. Para usar preços reais, edita os preços dos produtos no dashboard. Os produtos importados têm preço inicial de 0 € e não podem ser adicionados ao carrinho até definires o preço.
+1. Abre https://console.firebase.google.com/ e cria um projeto, por exemplo `thirst-project-uminho`.
+2. Em **Authentication → Get started → Sign-in method**, ativa **Email/Password**.
+3. Em **Authentication → Users → Add user**, cria a conta de administradora com o teu email e uma palavra-passe forte. Não existe registo público no dashboard.
+4. Em **Firestore Database → Create database**, cria a base de dados. Podes iniciar em modo de produção.
+5. Em **Storage → Get started**, ativa o armazenamento de imagens.
+6. Em **Project settings → General → Your apps**, cria uma aplicação Web (`</>`) e copia o objeto `firebaseConfig`.
+7. Abre `firebase-config.js` e substitui todos os valores `COLOCA_AQUI` pelos valores do Firebase. Preenche `ADMIN_EMAIL` com o email usado para criar a conta.
+8. Abre `firestore.rules` e `storage.rules`; substitui `COLOCA_AQUI_O_TEU_EMAIL` pelo mesmo email. Publica as regras nas secções **Firestore Database → Rules** e **Storage → Rules**.
 
-## Persistência e segurança
-O dashboard é uma ferramenta simples de edição local, sem autenticação. Não publiques dados pessoais nem partilhes o acesso de edição como se fosse um painel privado. Qualquer pessoa que conheça `/admin.html` pode editar o catálogo no seu próprio navegador e exportar uma cópia; só as alterações que forem efetivamente enviadas para o GitHub passam a estar no site público. Para uma equipa gerir produtos online com login e gravação direta, será necessário ligar um serviço com autenticação e base de dados ou implementar um CMS com backend.
+> A configuração Firebase da aplicação Web (incluindo apiKey) é pública por desenho. A proteção real é feita pelas regras de segurança no Firestore/Storage e pela autenticação. Não coloques palavras-passe ou chaves privadas no repositório.
+
+## 2. Publicar no GitHub Pages
+
+Carrega para a raiz do repositório todos os ficheiros atualizados deste projeto, incluindo `firebase-config.js`, `firebase.js`, `admin.js`, `app.js`, `firestore.rules` e `storage.rules`, além de `assets/` e `products.json`. Mantém a pasta `assets/stickers/`.
+
+Em **Settings → Pages**, escolhe `Deploy from a branch`, branch `main` e pasta `/ (root)`. O site público ficará em `https://<utilizador>.github.io/<repositorio>/`.
+
+## 3. Primeira importação dos 201 stickers
+
+Depois de configurares o Firebase e publicares os ficheiros:
+
+1. Abre `https://<utilizador>.github.io/<repositorio>/admin.html`.
+2. Inicia sessão com o email e palavra-passe criados no Firebase Authentication.
+3. Clica uma vez em **Importar catálogo inicial**. O dashboard lê `products.json` e cria os documentos na coleção `products` do Firestore. Produtos com o mesmo nome e categoria são ignorados.
+4. A loja passa a ler o catálogo diretamente do Firestore.
+
+As imagens dos 201 stickers continuam a ser servidas pela pasta `assets/stickers/`. As imagens de novos produtos carregadas no dashboard são enviadas automaticamente para Firebase Storage.
+
+## 4. Gestão diária
+
+No dashboard podes adicionar, editar e apagar stickers e porta-chaves. Cada alteração é guardada automaticamente no Firestore e aparece na loja pública sem novo commit no GitHub. O carrinho e o total são calculados no navegador.
+
+## Notas
+
+- O GitHub Pages aloja apenas a parte pública (HTML/CSS/JS); Firebase fornece autenticação e persistência.
+- A conta de administradora deve ser criada manualmente na consola Firebase. O site não permite criar contas.
+- Qualquer visitante pode ler o catálogo e as imagens públicas, mas só o email definido nas regras pode alterar produtos ou enviar imagens.
+- Os preços estão definidos no `app.js`; se a política de preços mudar, atualiza a fórmula e publica a alteração no GitHub.
