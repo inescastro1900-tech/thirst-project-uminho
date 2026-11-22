@@ -106,6 +106,40 @@
       </form>
     </section>
 
+    
+    <!-- GESTÃO DE ENCOMENDAS -->
+    <section class="admin-card orders-section">
+      <div class="admin-card-head">
+        <div>
+          <p class="eyebrow">LOJA ONLINE</p>
+          <h2>Gestão de encomendas <span id="orderCount">0</span></h2>
+        </div>
+        <span class="tag">ENCOMENDAS</span>
+      </div>
+    
+      <div class="orders-filters">
+        <input
+          id="orderSearch"
+          class="search-input"
+          type="search"
+          placeholder="Pesquisar por nome ou número..."
+        >
+    
+        <select id="orderStatusFilter" class="search-input">
+          <option value="all">Todos os estados</option>
+          <option value="Pendente">Pendentes</option>
+          <option value="Em preparação">Em preparação</option>
+          <option value="Pronta">Prontas</option>
+          <option value="Entregue">Entregues</option>
+          <option value="Cancelada">Canceladas</option>
+        </select>
+      </div>
+    
+      <div id="adminOrders" class="admin-orders">
+        <p>A carregar encomendas...</p>
+      </div>
+    </section>
+
     <section class="admin-list">
       <div class="list-heading">
         <div>
