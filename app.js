@@ -53,8 +53,19 @@ function cartTotal() {
   return stickers + keys * 4;
 }
 
-// CARREGAR PRODUTOS
+// VALIDAR CONTACTO
+function isValidContact(contact) {
+  const value = contact.trim();
 
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const phoneDigits = value.replace(/\D/g, '');
+  const isPhone = phoneDigits.length >= 7 && phoneDigits.length <= 15;
+
+  return isEmail || isPhone;
+}
+
+// CARREGAR PRODUTOS
 function loadProducts() {
   if (!firebaseConfigured) {
     $('productGrid').innerHTML =
@@ -82,7 +93,6 @@ function loadProducts() {
 }
 
 // MOSTRAR PRODUTOS
-
 function renderProducts() {
   const grid = $('productGrid');
 
@@ -133,7 +143,6 @@ function renderProducts() {
 }
 
 // CARRINHO
-
 function addToCart(id) {
   cart[id] = (cart[id] || 0) + 1;
   renderCart();
@@ -231,7 +240,6 @@ function closeCart() {
 }
 
 // EVENTOS DO CARRINHO
-
 $('productGrid').addEventListener('click', e => {
   const b = e.target.closest('[data-add]');
 
@@ -258,7 +266,6 @@ $('cartClose').onclick = closeCart;
 $('overlay').onclick = closeCart;
 
 // FILTROS
-
 document.querySelectorAll('.filter').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.filter').forEach(x => {
@@ -273,7 +280,6 @@ document.querySelectorAll('.filter').forEach(b => {
 });
 
 // COPIAR RESUMO DA ENCOMENDA
-
 $('copyOrder').onclick = async () => {
   const entries = Object.entries(cart).filter(
     ([id, q]) => q > 0 && products.some(p => p.id === id)
@@ -285,6 +291,7 @@ $('copyOrder').onclick = async () => {
   }
 
   const name = $('customerName').value.trim();
+  const contact = $('customerContact').value.trim();
 
   const lines = entries.map(([id, q]) => {
     const p = products.find(x => x.id === id);
@@ -305,9 +312,15 @@ $('copyOrder').onclick = async () => {
   }, 0);
 
   const msg = `ENCOMENDA — THIRST PROJECT UMINHO
-${name ? 'Nome: ' + name + '\n' : ''}${lines.join('\n')}
+
+Nome: ${name || 'Não indicado'}
+Contacto: ${contact || 'Não indicado'}
+
+${lines.join('\n')}
+
 Stickers: ${sc} — ${euro(stickerTotal(sc))}
 Porta-chaves: ${kt} — ${euro(kt * 4)}
+
 TOTAL: ${euro(cartTotal())}
 
 Portes de envio a combinar.`;
@@ -317,14 +330,12 @@ Portes de envio a combinar.`;
 
     $('copyFeedback').textContent =
       'Resumo copiado! Podes agora colá-lo numa mensagem.';
-
   } catch (e) {
     $('copyFeedback').textContent = msg;
   }
 };
 
 // POP-UP DE CONFIRMAÇÃO
-
 function showOrderSuccess(orderId) {
   $('successOrderNumber').textContent =
     `Número da encomenda: ${orderId}`;
@@ -345,7 +356,6 @@ $('successModal').addEventListener('click', event => {
 });
 
 // FINALIZAR ENCOMENDA
-
 async function finishOrder() {
   const entries = Object.entries(cart).filter(
     ([id, qty]) => qty > 0 && products.some(p => p.id === id)
@@ -356,17 +366,38 @@ async function finishOrder() {
     return;
   }
 
+  const name = $('customerName').value.trim();
+  const contact = $('customerContact').value.trim();
+
+  // Validar os campos obrigatórios
+  if (!name) {
+    $('copyFeedback').textContent = 'Por favor, indica o teu nome.';
+    $('customerName').focus();
+    return;
+  }
+
+  if (!contact) {
+    $('copyFeedback').textContent = 'Por favor, indica o teu email ou telemóvel.';
+    $('customerContact').focus();
+    return;
+  }
+
+  if (!isValidContact(contact)) {
+    $('copyFeedback').textContent =
+      'O contacto não parece válido. Introduz um email ou número de telemóvel.';
+    $('customerContact').focus();
+    return;
+  }
+
   const button = $('finishOrder');
 
   button.disabled = true;
   button.textContent = 'A registar encomenda...';
 
-  const name = $('customerName').value.trim();
   const stickerQty = stickerCount();
 
   const keychainQty = entries.reduce((sum, [id, qty]) => {
     const p = products.find(x => x.id === id);
-
     return sum + (p?.category === 'keychain' ? qty : 0);
   }, 0);
 
@@ -391,9 +422,9 @@ async function finishOrder() {
 
   try {
     // 1. Guardar a encomenda no Firestore
-
     const orderRef = await addDoc(collection(db, 'orders'), {
-      customerName: name || 'Não indicado',
+      customerName: name,
+      customerContact: contact,
       items,
       stickerCount: stickerQty,
       stickerTotal: stickerTotal(stickerQty),
@@ -405,14 +436,14 @@ async function finishOrder() {
     });
 
     // 2. Enviar email através do EmailJS
-
     try {
       await emailjs.send(
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_ID,
         {
           order_id: orderRef.id,
-          customer_name: name || 'Não indicado',
+          customer_name: name,
+          customer_contact: contact,
           order_details: details,
           order_total: euro(total),
           order_date: new Date().toLocaleString('pt-PT')
@@ -421,25 +452,22 @@ async function finishOrder() {
           publicKey: EMAILJS_PUBLIC_KEY
         }
       );
-
     } catch (emailError) {
       console.error('Erro no envio do email:', emailError);
     }
 
-    // 3. Limpar o carrinho
-
+    // 3. Limpar o carrinho e os campos
     cart = {};
     renderCart();
 
     $('customerName').value = '';
+    $('customerContact').value = '';
     $('copyFeedback').textContent = '';
 
-    // 4. Fechar o carrinho corretamente
-
+    // 4. Fechar o carrinho
     closeCart();
 
-    // 5. Mostrar confirmação da encomenda
-
+    // 5. Mostrar confirmação
     showOrderSuccess(orderRef.id);
 
   } catch (error) {
@@ -447,7 +475,6 @@ async function finishOrder() {
 
     $('copyFeedback').textContent =
       'Não foi possível registar a encomenda. Tenta novamente.';
-
   } finally {
     button.disabled = false;
     button.textContent = 'Finalizar encomenda';
@@ -457,6 +484,5 @@ async function finishOrder() {
 $('finishOrder').addEventListener('click', finishOrder);
 
 // INICIALIZAÇÃO
-
 loadProducts();
 renderCart();
