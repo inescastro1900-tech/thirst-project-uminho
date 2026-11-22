@@ -8,6 +8,45 @@ service cloud.firestore {
     match /products/{productId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+
+    match /orders/{orderId} {
+      // Os clientes podem criar encomendas
+      allow create: if
+        request.resource.data.keys().hasAll([
+          'customerName',
+          'items',
+          'stickerCount',
+          'stickerTotal',
+          'keychainCount',
+          'keychainTotal',
+          'total',
+          'status',
+          'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'customerName',
+          'items',
+          'stickerCount',
+          'stickerTotal',
+          'keychainCount',
+          'keychainTotal',
+          'total',
+          'status',
+          'createdAt'
+        ])
+        && request.resource.data.items is list
+        && request.resource.data.items.size() > 0
+        && request.resource.data.items.size() <= 100
+        && request.resource.data.total is number
+        && request.resource.data.total >= 0
+        && request.resource.data.status == 'Pendente'
+        && request.resource.data.createdAt == request.time;
+    
+      // Apenas a administradora pode consultar e gerir encomendas
+      allow read, update, delete: if
+        request.auth != null
+        && request.auth.token.email == 'uminho.thirstprojectportugal@gmail.com';
+}
     }
   }
 }
