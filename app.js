@@ -261,9 +261,21 @@ $('cartItems').addEventListener('click', e => {
   }
 });
 
-$('cartOpen').onclick = openCart;
-$('cartClose').onclick = closeCart;
-$('overlay').onclick = closeCart;
+const cartOpenButton = $('cartOpen');
+const cartCloseButton = $('cartClose');
+const cartOverlay = $('overlay');
+
+if (cartOpenButton) {
+  cartOpenButton.addEventListener('click', openCart);
+}
+
+if (cartCloseButton) {
+  cartCloseButton.addEventListener('click', closeCart);
+}
+
+if (cartOverlay) {
+  cartOverlay.addEventListener('click', closeCart);
+}
 
 // FILTROS
 document.querySelectorAll('.filter').forEach(b => {
