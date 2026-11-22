@@ -14,6 +14,8 @@
 </main>
 <footer><span>THIRST PROJECT UMINHO · LOJA SOLIDÁRIA</span><a href="admin.html"> Área reservada</a></footer> 
 <div class="overlay" id="overlay"></div><aside class="cart-panel" id="cartPanel" aria-label="Carrinho de compras"><div class="cart-head"><div><p class="eyebrow">A TUA SELEÇÃO</p><h2>Carrinho <span id="cartTitleCount">(0)</span></h2></div><button class="icon-btn" id="cartClose" aria-label="Fechar">✕</button></div><div id="cartItems" class="cart-items"><p class="empty-cart">Ainda não escolheste nada. Vai espreitar a loja!</p></div><div class="cart-bottom"><div id="cartBreakdown"></div><div class="total-line"><span>Total</span><strong id="cartTotal">0,00 €</strong></div><p class="small-note">Portes de envio, se aplicáveis, serão combinados à parte.</p><label class="customer-label" for="customerName">O teu nome (opcional)</label><input id="customerName" class="customer-input" placeholder="Como te chamas?">
+<button id="finishOrder" class="primary-btn checkout-btn">Finalizar encomenda</button>
 <button id="copyOrder" class="primary-btn checkout-btn">Copiar resumo da encomenda</button><p id="copyFeedback" class="feedback" aria-live="polite"></p></div></aside>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@5/dist/email.min.js"></script>
 <script type="module" src="app.js"></script>
 </body></html>
