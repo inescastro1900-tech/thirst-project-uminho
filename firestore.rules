@@ -1,15 +1,23 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email == 'uminho.thirstprojectportugal@gmail.com';
     }
+
+    // PRODUTOS
     match /products/{productId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
 
+    // ENCOMENDAS
     match /orders/{orderId} {
+
       // Os clientes podem criar encomendas
       allow create: if
         request.resource.data.keys().hasAll([
@@ -41,12 +49,9 @@ service cloud.firestore {
         && request.resource.data.total >= 0
         && request.resource.data.status == 'Pendente'
         && request.resource.data.createdAt == request.time;
-    
+
       // Apenas a administradora pode consultar e gerir encomendas
-      allow read, update, delete: if
-        request.auth != null
-        && request.auth.token.email == 'uminho.thirstprojectportugal@gmail.com';
-}
+      allow read, update, delete: if isAdmin();
     }
   }
 }
