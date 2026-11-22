@@ -28,6 +28,8 @@ const $ = id => document.getElementById(id);
 
 let products = [];
 let unsubscribe = null;
+let unsubscribeOrders = null;
+let orders = [];
 let imageFiles = [];
 
 const loginPanel = $('loginPanel');
@@ -96,12 +98,20 @@ onAuthStateChanged(auth, user => {
 
     loadImages();
     startProductsListener();
+    startOrdersListener();
   } else {
     if (user) signOut(auth);
 
     if (unsubscribe) {
       unsubscribe();
       unsubscribe = null;
+
+    if (unsubscribeOrders) {
+      unsubscribeOrders();
+      unsubscribeOrders = null;
+    }
+    
+    orders = [];
     }
 
     loginPanel.hidden = false;
@@ -372,3 +382,186 @@ $('seedBtn').onclick = async () => {
     btn.disabled = false;
   }
 };
+
+
+// ==========================================
+// GESTÃO DE ENCOMENDAS
+// ==========================================
+
+function startOrdersListener() {
+  if (unsubscribeOrders) unsubscribeOrders();
+
+  unsubscribeOrders = onSnapshot(
+    collection(db, 'orders'),
+    snapshot => {
+      orders = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.()?.getTime() || 0;
+          const dateB = b.createdAt?.toDate?.()?.getTime() || 0;
+          return dateB - dateA;
+        });
+
+      renderOrders();
+    },
+    error => {
+      $('adminOrders').innerHTML =
+        `<p class="feedback">Erro ao carregar encomendas: ${escapeHTML(error.message)}</p>`;
+    }
+  );
+}
+
+function formatOrderDate(timestamp) {
+  if (!timestamp?.toDate) return 'Data indisponível';
+
+  return timestamp.toDate().toLocaleString('pt-PT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function orderStatusOptions(current) {
+  const statuses = [
+    'Pendente',
+    'Em preparação',
+    'Pronta',
+    'Entregue',
+    'Cancelada'
+  ];
+
+  return statuses.map(status => `
+    <option value="${status}" ${current === status ? 'selected' : ''}>
+      ${status}
+    </option>
+  `).join('');
+}
+
+function renderOrders() {
+  const container = $('adminOrders');
+  const search = $('orderSearch').value.trim().toLowerCase();
+  const statusFilter = $('orderStatusFilter').value;
+
+  $('orderCount').textContent = orders.length;
+
+  const visible = orders.filter(order => {
+    const matchesSearch =
+      (order.customerName || '').toLowerCase().includes(search) ||
+      order.id.toLowerCase().includes(search);
+
+    const matchesStatus =
+      statusFilter === 'all' || order.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  if (!visible.length) {
+    container.innerHTML = '<p class="empty-orders">Não existem encomendas para mostrar.</p>';
+    return;
+  }
+
+  container.innerHTML = visible.map(order => {
+    const items = Array.isArray(order.items) ? order.items : [];
+
+    const itemHTML = items.map(item => `
+      <div class="order-item">
+        <span>
+          ${escapeHTML(item.name || 'Produto')}
+          ${item.category === 'keychain' ? '(Porta-chaves)' : '(Sticker)'}
+        </span>
+        <b>${Number(item.quantity) || 0} ×</b>
+      </div>
+    `).join('');
+
+    const total = Number(order.total || 0).toLocaleString('pt-PT', {
+      style: 'currency',
+      currency: 'EUR'
+    });
+
+    return `
+      <article class="order-card">
+        <div class="order-header">
+          <div>
+            <span class="order-number">ENCOMENDA #${escapeHTML(order.id.slice(0, 8))}</span>
+            <h3>${escapeHTML(order.customerName || 'Cliente sem nome')}</h3>
+            <small>${formatOrderDate(order.createdAt)}</small>
+          </div>
+          <strong class="order-total">${total}</strong>
+        </div>
+
+        <div class="order-items">
+          ${itemHTML}
+        </div>
+
+        <div class="order-footer">
+          <label>
+            Estado:
+            <select
+              class="order-status"
+              data-order-status="${escapeHTML(order.id)}"
+            >
+              ${orderStatusOptions(order.status || 'Pendente')}
+            </select>
+          </label>
+
+          <button
+            class="delete"
+            type="button"
+            data-delete-order="${escapeHTML(order.id)}"
+          >
+            Apagar encomenda
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+// Pesquisa e filtros
+$('orderSearch').addEventListener('input', renderOrders);
+$('orderStatusFilter').addEventListener('change', renderOrders);
+
+// Alterar estado da encomenda
+$('adminOrders').addEventListener('change', async event => {
+  const select = event.target.closest('[data-order-status]');
+  if (!select) return;
+
+  const id = select.dataset.orderStatus;
+  const newStatus = select.value;
+
+  select.disabled = true;
+
+  try {
+    await updateDoc(doc(db, 'orders', id), {
+      status: newStatus
+    });
+  } catch (error) {
+    alert(`Não foi possível atualizar a encomenda: ${error.message}`);
+    renderOrders();
+  } finally {
+    select.disabled = false;
+  }
+});
+
+// Apagar encomenda
+$('adminOrders').addEventListener('click', async event => {
+  const button = event.target.closest('[data-delete-order]');
+  if (!button) return;
+
+  const id = button.dataset.deleteOrder;
+
+  if (!confirm('Tens a certeza de que queres apagar esta encomenda?')) {
+    return;
+  }
+
+  button.disabled = true;
+
+  try {
+    await deleteDoc(doc(db, 'orders', id));
+  } catch (error) {
+    alert(`Não foi possível apagar a encomenda: ${error.message}`);
+    button.disabled = false;
+  }
+});
