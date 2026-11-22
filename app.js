@@ -279,61 +279,6 @@ document.querySelectorAll('.filter').forEach(b => {
   });
 });
 
-// COPIAR RESUMO DA ENCOMENDA
-$('copyOrder').onclick = async () => {
-  const entries = Object.entries(cart).filter(
-    ([id, q]) => q > 0 && products.some(p => p.id === id)
-  );
-
-  if (!entries.length) {
-    $('copyFeedback').textContent = 'O carrinho ainda está vazio.';
-    return;
-  }
-
-  const name = $('customerName').value.trim();
-  const contact = $('customerContact').value.trim();
-
-  const lines = entries.map(([id, q]) => {
-    const p = products.find(x => x.id === id);
-
-    return `${q} × ${p.name} (${
-      p.category === 'keychain'
-        ? 'porta-chaves · inclui 2 stickers aleatórios'
-        : 'sticker'
-    })`;
-  });
-
-  const sc = stickerCount();
-
-  const kt = entries.reduce((s, [id, q]) => {
-    return s + (
-      products.find(p => p.id === id)?.category === 'keychain' ? q : 0
-    );
-  }, 0);
-
-  const msg = `ENCOMENDA — THIRST PROJECT UMINHO
-
-Nome: ${name || 'Não indicado'}
-Contacto: ${contact || 'Não indicado'}
-
-${lines.join('\n')}
-
-Stickers: ${sc} — ${euro(stickerTotal(sc))}
-Porta-chaves: ${kt} — ${euro(kt * 4)}
-
-TOTAL: ${euro(cartTotal())}
-
-Portes de envio a combinar.`;
-
-  try {
-    await navigator.clipboard.writeText(msg);
-
-    $('copyFeedback').textContent =
-      'Resumo copiado! Podes agora colá-lo numa mensagem.';
-  } catch (e) {
-    $('copyFeedback').textContent = msg;
-  }
-};
 
 // POP-UP DE CONFIRMAÇÃO
 function showOrderSuccess(orderId) {
