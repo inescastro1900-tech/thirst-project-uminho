@@ -758,6 +758,7 @@ function orderStatusOptions(current) {
 // MOSTRAR ENCOMENDAS
 // ==========================================
 
+
 function renderOrders() {
 
   const container = $('adminOrders');
@@ -778,6 +779,11 @@ function renderOrders() {
       (order.customerName || '')
         .toLowerCase()
         .includes(search) ||
+
+      (order.customerContact || '')
+        .toLowerCase()
+        .includes(search) ||
+
       order.id.toLowerCase().includes(search);
 
     const matchesStatus =
@@ -836,6 +842,12 @@ function renderOrders() {
     const status =
       order.status || 'Pendente';
 
+    const customerName =
+      order.customerName || 'Cliente sem nome';
+
+    const customerContact =
+      order.customerContact || 'Não indicado';
+
     return `
 
       <article class="order-card">
@@ -849,8 +861,13 @@ function renderOrders() {
             </span>
 
             <h3>
-              ${escapeHTML(order.customerName || 'Cliente sem nome')}
+              ${escapeHTML(customerName)}
             </h3>
+
+            <p class="order-contact">
+              <strong>Contacto:</strong>
+              ${escapeHTML(customerContact)}
+            </p>
 
             <small>
               ${formatOrderDate(order.createdAt)}
@@ -898,6 +915,7 @@ function renderOrders() {
 
   }).join('');
 }
+
 
 // ==========================================
 // PESQUISA E FILTROS
