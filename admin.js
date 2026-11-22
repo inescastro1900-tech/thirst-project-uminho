@@ -20,6 +20,10 @@ import {
   getDocs
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
+// ==========================================
+// CONFIGURAÇÃO
+// ==========================================
+
 const OWNER = 'inescastro1900-tech';
 const REPO = 'thirst-project-uminho';
 const BRANCH = 'main';
@@ -27,13 +31,18 @@ const BRANCH = 'main';
 const $ = id => document.getElementById(id);
 
 let products = [];
-let unsubscribe = null;
-let unsubscribeOrders = null;
 let orders = [];
 let imageFiles = [];
 
+let unsubscribeProducts = null;
+let unsubscribeOrders = null;
+
 const loginPanel = $('loginPanel');
 const dashboardPanel = $('dashboardPanel');
+
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
 
 function message(id, text, isError = false) {
   const el = $(id);
@@ -60,10 +69,14 @@ function requireConfig() {
     message('loginFeedback', 'Configura primeiro o firebase-config.js.', true);
     return false;
   }
+
   return true;
 }
 
-// LOGIN
+// ==========================================
+// LOGIN E AUTENTICAÇÃO
+// ==========================================
+
 $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
 
@@ -88,45 +101,59 @@ $('loginForm').addEventListener('submit', async e => {
 $('logoutBtn').onclick = () => signOut(auth);
 
 onAuthStateChanged(auth, user => {
+
   if (
     user &&
     user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
   ) {
+
     loginPanel.hidden = true;
     dashboardPanel.hidden = false;
-    $('signedInAs').textContent = `Sessão iniciada como ${user.email}`;
+
+    $('signedInAs').textContent =
+      `Sessão iniciada como ${user.email}`;
 
     loadImages();
     startProductsListener();
     startOrdersListener();
+
   } else {
+
     if (user) signOut(auth);
 
-    if (unsubscribe) {
-      unsubscribe();
-      unsubscribe = null;
+    if (unsubscribeProducts) {
+      unsubscribeProducts();
+      unsubscribeProducts = null;
+    }
 
     if (unsubscribeOrders) {
       unsubscribeOrders();
       unsubscribeOrders = null;
     }
-    
+
+    products = [];
     orders = [];
-    }
 
     loginPanel.hidden = false;
     dashboardPanel.hidden = true;
   }
 });
 
+// ==========================================
 // IMAGENS DO GITHUB
+// ==========================================
+
 async function loadImages() {
+
   const folders = ['stickers', 'portachaves'];
   imageFiles = [];
 
   try {
+
     for (const folder of folders) {
-      const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/assets/${folder}?ref=${BRANCH}`;
+
+      const url =
+        `https://api.github.com/repos/${OWNER}/${REPO}/contents/assets/${folder}?ref=${BRANCH}`;
 
       const response = await fetch(url);
 
@@ -137,32 +164,42 @@ async function loadImages() {
       const files = await response.json();
 
       files
-        .filter(file => file.type === 'file' && /\.(png|jpe?g|webp|gif)$/i.test(file.name))
+        .filter(file =>
+          file.type === 'file' &&
+          /\.(png|jpe?g|webp|gif)$/i.test(file.name)
+        )
         .forEach(file => {
+
           imageFiles.push({
             name: file.name,
             path: `assets/${folder}/${file.name}`,
             category: folder === 'stickers' ? 'sticker' : 'keychain'
           });
+
         });
     }
 
     updateImageSelector();
+
   } catch (err) {
     message('saveFeedback', `Erro ao carregar imagens: ${err.message}`, true);
   }
 }
 
 function updateImageSelector(selectedPath = '') {
+
   const category = $('productCategory').value;
   const select = $('productImage');
 
   const previous = selectedPath || select.value;
 
-  const available = imageFiles.filter(img => img.category === category);
+  const available = imageFiles.filter(
+    img => img.category === category
+  );
 
   select.innerHTML =
     '<option value="">Seleciona uma imagem...</option>' +
+
     available.map(img =>
       `<option value="${escapeHTML(img.path)}">${escapeHTML(img.name)}</option>`
     ).join('');
@@ -181,6 +218,7 @@ $('productCategory').addEventListener('change', () => {
 $('productImage').addEventListener('change', updatePreview);
 
 function updatePreview() {
+
   const path = $('productImage').value;
 
   if (!path) {
@@ -192,23 +230,39 @@ function updatePreview() {
   $('previewWrap').hidden = false;
 }
 
-// LISTA DE PRODUTOS
-function startProductsListener() {
-  if (unsubscribe) unsubscribe();
+// ==========================================
+// GESTÃO DE PRODUTOS
+// ==========================================
 
-  unsubscribe = onSnapshot(
+function startProductsListener() {
+
+  if (unsubscribeProducts) {
+    unsubscribeProducts();
+  }
+
+  unsubscribeProducts = onSnapshot(
     collection(db, 'products'),
+
     snap => {
-      products = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt'));
+
+      products = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) =>
+          (a.name || '').localeCompare(b.name || '', 'pt')
+        );
 
       renderProducts();
     },
-    err => message('saveFeedback', `Erro ao ler catálogo: ${err.message}`, true)
+
+    err => {
+      message('saveFeedback', `Erro ao ler catálogo: ${err.message}`, true);
+      console.error(err);
+    }
   );
 }
 
 function renderProducts() {
+
   const q = $('adminSearch').value.toLowerCase();
 
   const visible = products.filter(p =>
@@ -218,37 +272,60 @@ function renderProducts() {
   $('productCount').textContent = products.length;
 
   $('adminProducts').innerHTML = visible.map(p => `
+
     <article class="admin-product">
+
       <img src="${escapeHTML(p.image || '')}" alt="">
+
       <div class="admin-product-info">
         <b>${escapeHTML(p.name)}</b>
-        <small>${p.category === 'keychain' ? 'Porta-chaves · 4,00 €' : 'Sticker · Preço por packs'}</small>
+
+        <small>
+          ${p.category === 'keychain'
+            ? 'Porta-chaves · 4,00 €'
+            : 'Sticker · Preço por packs'}
+        </small>
       </div>
+
       <div class="admin-product-actions">
         <button data-edit="${escapeHTML(p.id)}">Editar</button>
-        <button class="delete" data-delete="${escapeHTML(p.id)}">Apagar</button>
+
+        <button class="delete" data-delete="${escapeHTML(p.id)}">
+          Apagar
+        </button>
       </div>
+
     </article>
+
   `).join('') || '<p>Não foram encontrados produtos.</p>';
 }
 
 $('adminSearch').oninput = renderProducts;
 
 $('adminProducts').addEventListener('click', e => {
+
   const edit = e.target.closest('[data-edit]');
   const del = e.target.closest('[data-delete]');
 
   if (edit) editProduct(edit.dataset.edit);
   if (del) removeProduct(del.dataset.delete);
+
 });
 
-// FORMULÁRIO
+// ==========================================
+// FORMULÁRIO DE PRODUTOS
+// ==========================================
+
 function resetForm() {
+
   $('productForm').reset();
   $('editId').value = '';
+
   $('previewWrap').hidden = true;
+
   $('formTitle').textContent = 'Adicionar produto';
   $('saveProduct').textContent = 'Adicionar produto';
+
   $('cancelEdit').hidden = true;
 
   updateImageSelector();
@@ -257,12 +334,14 @@ function resetForm() {
 $('cancelEdit').onclick = resetForm;
 
 $('productForm').addEventListener('submit', async e => {
+
   e.preventDefault();
 
   const button = $('saveProduct');
   button.disabled = true;
 
   try {
+
     const id = $('editId').value;
 
     const data = {
@@ -279,24 +358,40 @@ $('productForm').addEventListener('submit', async e => {
     }
 
     if (id) {
+
       await updateDoc(doc(db, 'products', id), data);
+
     } else {
+
       data.createdAt = serverTimestamp();
+
       await addDoc(collection(db, 'products'), data);
     }
 
     resetForm();
+
     message('saveFeedback', 'Produto guardado com sucesso!');
+
   } catch (err) {
+
     message('saveFeedback', `Não foi possível guardar: ${err.message}`, true);
+
   } finally {
+
     button.disabled = false;
-    button.textContent = $('editId').value ? 'Guardar alterações' : 'Adicionar produto';
+
+    button.textContent =
+      $('editId').value ? 'Guardar alterações' : 'Adicionar produto';
   }
+
 });
 
-// EDITAR
+// ==========================================
+// EDITAR PRODUTO
+// ==========================================
+
 function editProduct(id) {
+
   const p = products.find(x => x.id === id);
   if (!p) return;
 
@@ -316,31 +411,48 @@ function editProduct(id) {
   $('saveProduct').textContent = 'Guardar alterações';
   $('cancelEdit').hidden = false;
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
 }
 
-// ELIMINAR
+// ==========================================
+// ELIMINAR PRODUTO
+// ==========================================
+
 async function removeProduct(id) {
+
   const p = products.find(x => x.id === id);
 
   if (!p || !confirm(`Apagar "${p.name}"?`)) return;
 
   try {
+
     await deleteDoc(doc(db, 'products', id));
+
     message('saveFeedback', 'Produto apagado.');
+
   } catch (err) {
+
     message('saveFeedback', `Erro ao apagar: ${err.message}`, true);
+
   }
 }
 
+// ==========================================
 // IMPORTAR CATÁLOGO INICIAL
+// ==========================================
+
 $('seedBtn').onclick = async () => {
+
   if (!confirm('Importar os produtos de products.json?')) return;
 
   const btn = $('seedBtn');
   btn.disabled = true;
 
   try {
+
     const response = await fetch('./products.json');
 
     if (!response.ok) {
@@ -348,6 +460,7 @@ $('seedBtn').onclick = async () => {
     }
 
     const initial = await response.json();
+
     const snapshot = await getDocs(collection(db, 'products'));
 
     const existing = new Set(
@@ -358,6 +471,7 @@ $('seedBtn').onclick = async () => {
     let added = 0;
 
     for (const p of initial) {
+
       if (existing.has(p.id)) continue;
 
       const newDoc = doc(db, 'products', p.id);
@@ -373,46 +487,89 @@ $('seedBtn').onclick = async () => {
       added++;
     }
 
-    if (added) await batch.commit();
+    if (added) {
+      await batch.commit();
+    }
 
     message('saveFeedback', `${added} produtos importados.`);
+
   } catch (err) {
+
     message('saveFeedback', `Erro na importação: ${err.message}`, true);
+
   } finally {
+
     btn.disabled = false;
+
   }
 };
-
 
 // ==========================================
 // GESTÃO DE ENCOMENDAS
 // ==========================================
 
 function startOrdersListener() {
-  if (unsubscribeOrders) unsubscribeOrders();
+
+  if (unsubscribeOrders) {
+    unsubscribeOrders();
+  }
+
+  const container = $('adminOrders');
+
+  container.innerHTML = '<p>A carregar encomendas...</p>';
+
+  console.log('A iniciar listener das encomendas...');
 
   unsubscribeOrders = onSnapshot(
     collection(db, 'orders'),
+
     snapshot => {
+
+      console.log(
+        'Encomendas recebidas do Firestore:',
+        snapshot.size
+      );
+
       orders = snapshot.docs
-        .map(d => ({ id: d.id, ...d.data() }))
+        .map(d => ({
+          id: d.id,
+          ...d.data()
+        }))
         .sort((a, b) => {
+
           const dateA = a.createdAt?.toDate?.()?.getTime() || 0;
           const dateB = b.createdAt?.toDate?.()?.getTime() || 0;
+
           return dateB - dateA;
         });
 
       renderOrders();
     },
+
     error => {
-      $('adminOrders').innerHTML =
-        `<p class="feedback">Erro ao carregar encomendas: ${escapeHTML(error.message)}</p>`;
+
+      console.error('Erro ao carregar encomendas:', error);
+
+      container.innerHTML = `
+        <p class="feedback">
+          Não foi possível carregar as encomendas.
+          ${escapeHTML(error.message)}
+        </p>
+      `;
+
     }
   );
 }
 
+// ==========================================
+// FORMATAÇÃO DAS ENCOMENDAS
+// ==========================================
+
 function formatOrderDate(timestamp) {
-  if (!timestamp?.toDate) return 'Data indisponível';
+
+  if (!timestamp?.toDate) {
+    return 'Data indisponível';
+  }
 
   return timestamp.toDate().toLocaleString('pt-PT', {
     day: '2-digit',
@@ -424,6 +581,7 @@ function formatOrderDate(timestamp) {
 }
 
 function orderStatusOptions(current) {
+
   const statuses = [
     'Pendente',
     'Em preparação',
@@ -433,46 +591,75 @@ function orderStatusOptions(current) {
   ];
 
   return statuses.map(status => `
-    <option value="${status}" ${current === status ? 'selected' : ''}>
+
+    <option
+      value="${status}"
+      ${current === status ? 'selected' : ''}
+    >
       ${status}
     </option>
+
   `).join('');
 }
 
+// ==========================================
+// MOSTRAR ENCOMENDAS
+// ==========================================
+
 function renderOrders() {
+
   const container = $('adminOrders');
+
   const search = $('orderSearch').value.trim().toLowerCase();
   const statusFilter = $('orderStatusFilter').value;
 
   $('orderCount').textContent = orders.length;
 
   const visible = orders.filter(order => {
+
     const matchesSearch =
       (order.customerName || '').toLowerCase().includes(search) ||
       order.id.toLowerCase().includes(search);
 
     const matchesStatus =
-      statusFilter === 'all' || order.status === statusFilter;
+      statusFilter === 'all' ||
+      (order.status || 'Pendente') === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
   if (!visible.length) {
-    container.innerHTML = '<p class="empty-orders">Não existem encomendas para mostrar.</p>';
+
+    container.innerHTML = `
+      <p class="empty-orders">
+        ${orders.length
+          ? 'Não existem encomendas com estes filtros.'
+          : 'Ainda não existem encomendas.'}
+      </p>
+    `;
+
     return;
   }
 
   container.innerHTML = visible.map(order => {
+
     const items = Array.isArray(order.items) ? order.items : [];
 
     const itemHTML = items.map(item => `
+
       <div class="order-item">
+
         <span>
           ${escapeHTML(item.name || 'Produto')}
-          ${item.category === 'keychain' ? '(Porta-chaves)' : '(Sticker)'}
+          ${item.category === 'keychain'
+            ? '(Porta-chaves)'
+            : '(Sticker)'}
         </span>
+
         <b>${Number(item.quantity) || 0} ×</b>
+
       </div>
+
     `).join('');
 
     const total = Number(order.total || 0).toLocaleString('pt-PT', {
@@ -480,15 +667,30 @@ function renderOrders() {
       currency: 'EUR'
     });
 
+    const status = order.status || 'Pendente';
+
     return `
+
       <article class="order-card">
+
         <div class="order-header">
+
           <div>
-            <span class="order-number">ENCOMENDA #${escapeHTML(order.id.slice(0, 8))}</span>
-            <h3>${escapeHTML(order.customerName || 'Cliente sem nome')}</h3>
+
+            <span class="order-number">
+              ENCOMENDA #${escapeHTML(order.id.slice(0, 8))}
+            </span>
+
+            <h3>
+              ${escapeHTML(order.customerName || 'Cliente sem nome')}
+            </h3>
+
             <small>${formatOrderDate(order.createdAt)}</small>
+
           </div>
+
           <strong class="order-total">${total}</strong>
+
         </div>
 
         <div class="order-items">
@@ -496,13 +698,15 @@ function renderOrders() {
         </div>
 
         <div class="order-footer">
+
           <label>
             Estado:
+
             <select
               class="order-status"
               data-order-status="${escapeHTML(order.id)}"
             >
-              ${orderStatusOptions(order.status || 'Pendente')}
+              ${orderStatusOptions(status)}
             </select>
           </label>
 
@@ -513,19 +717,32 @@ function renderOrders() {
           >
             Apagar encomenda
           </button>
+
         </div>
+
       </article>
+
     `;
+
   }).join('');
 }
 
-// Pesquisa e filtros
+// ==========================================
+// PESQUISA E FILTROS
+// ==========================================
+
 $('orderSearch').addEventListener('input', renderOrders);
+
 $('orderStatusFilter').addEventListener('change', renderOrders);
 
-// Alterar estado da encomenda
+// ==========================================
+// ALTERAR ESTADO DA ENCOMENDA
+// ==========================================
+
 $('adminOrders').addEventListener('change', async event => {
+
   const select = event.target.closest('[data-order-status]');
+
   if (!select) return;
 
   const id = select.dataset.orderStatus;
@@ -534,20 +751,32 @@ $('adminOrders').addEventListener('change', async event => {
   select.disabled = true;
 
   try {
+
     await updateDoc(doc(db, 'orders', id), {
       status: newStatus
     });
+
   } catch (error) {
+
     alert(`Não foi possível atualizar a encomenda: ${error.message}`);
+
     renderOrders();
+
   } finally {
+
     select.disabled = false;
+
   }
 });
 
-// Apagar encomenda
+// ==========================================
+// ELIMINAR ENCOMENDA
+// ==========================================
+
 $('adminOrders').addEventListener('click', async event => {
+
   const button = event.target.closest('[data-delete-order]');
+
   if (!button) return;
 
   const id = button.dataset.deleteOrder;
@@ -559,9 +788,16 @@ $('adminOrders').addEventListener('click', async event => {
   button.disabled = true;
 
   try {
+
     await deleteDoc(doc(db, 'orders', id));
+
   } catch (error) {
+
     alert(`Não foi possível apagar a encomenda: ${error.message}`);
+
     button.disabled = false;
+
   }
+
 });
+
