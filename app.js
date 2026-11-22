@@ -29,6 +29,7 @@ $('copyOrder').onclick=async()=>{const entries=Object.entries(cart).filter(([id,
 loadProducts();renderCart();
 
 
+
 async function finishOrder() {
   const entries = Object.entries(cart).filter(
     ([id, qty]) => qty > 0 && products.some(p => p.id === id)
@@ -99,14 +100,8 @@ async function finishOrder() {
         }
       );
 
-      $('copyFeedback').textContent =
-        `Encomenda registada! Número: ${orderRef.id}. Recebemos a tua encomenda.`;
-
     } catch (emailError) {
       console.error('Erro no envio do email:', emailError);
-
-      $('copyFeedback').textContent =
-        `Encomenda ${orderRef.id} registada, mas não foi possível enviar a notificação por email.`;
     }
 
     // 3. Limpar o carrinho
@@ -114,15 +109,42 @@ async function finishOrder() {
     renderCart();
     $('customerName').value = '';
 
+    // 4. Fechar o carrinho
+    $('cartPanel').classList.remove('open');
+    $('overlay').classList.remove('active');
+
+    // 5. Preparar e mostrar o pop-up
+    $('successOrderNumber').textContent =
+      `Número da encomenda: ${orderRef.id}`;
+
+    $('successModal').hidden = false;
+
+    $('copyFeedback').textContent = '';
+
   } catch (error) {
     console.error('Erro ao registar encomenda:', error);
 
     $('copyFeedback').textContent =
       'Não foi possível registar a encomenda. Tenta novamente.';
+
   } finally {
     button.disabled = false;
     button.textContent = 'Finalizar encomenda';
   }
 }
 
+// Finalizar encomenda
 $('finishOrder').addEventListener('click', finishOrder);
+
+// Fechar pop-up
+$('successClose').addEventListener('click', () => {
+  $('successModal').hidden = true;
+});
+
+// Fechar pop-up ao clicar fora da caixa
+$('successModal').addEventListener('click', (event) => {
+  if (event.target.id === 'successModal') {
+    $('successModal').hidden = true;
+  }
+});
+
